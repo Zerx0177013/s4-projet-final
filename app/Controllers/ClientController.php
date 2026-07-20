@@ -102,11 +102,31 @@ class ClientController extends BaseController
         $type   = (string) ($input['type'] ?? '');
         $amount = (float) ($input['amount'] ?? 0);
         $target = isset($input['target']) ? preg_replace('/\D/', '', (string) $input['target']) : null;
+        $includeFee = (bool) ($input['includeFee'] ?? false);
 
         $mouvementModel = new Mouvement();
 
+        // Gestion des transferts multiples
+        if ($type === 'transfert-multiple') {
+            $targets = isset($input['targets']) && is_array($input['targets']) 
+                ? array_map(fn($t) => preg_replace('/\D/', '', (string) $t), $input['targets'])
+                : [];
+
+            if (empty($targets)) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Aucun destinataire fourni.']);
+            }
+
+            try {
+                $result = $mouvementModel->enregistrerMultipleTransferts($compte, $amount, $targets);
+            } catch (RuntimeException $e) {
+                return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+            }
+
+            return $this->response->setJSON(array_merge(['success' => true], $result));
+        }
+
         try {
-            $result = $mouvementModel->enregistrerOperation($compte, $type, $amount, $target);
+            $result = $mouvementModel->enregistrerOperation($compte, $type, $amount, $target, $includeFee);
         } catch (RuntimeException $e) {
             return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }

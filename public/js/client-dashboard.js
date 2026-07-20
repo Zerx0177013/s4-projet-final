@@ -120,9 +120,31 @@ function updateFeePreview(type) {
     if (!amt || amt < 100) { preview.style.display = 'none'; return }
     const fee = getFee(slabs, amt);
     preview.style.display = 'block';
-    document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
-    document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
-    document.getElementById(type + '-p-total').textContent = fmtAr(amt + fee);
+
+    if (type === 'transfert') {
+        const includeFee = document.getElementById('transfert-include-fee')?.checked || false;
+
+        if (includeFee) {
+            // Frais inclus dans le montant
+            const amountReceived = amt - fee;
+            document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
+            document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
+            document.getElementById('transfert-p-received-label').textContent = 'Destinataire reçoit';
+            document.getElementById('transfert-p-received').textContent = fmtAr(amountReceived);
+            document.getElementById(type + '-p-total').textContent = fmtAr(amt);
+        } else {
+            // Frais ajoutés au montant
+            document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
+            document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
+            document.getElementById('transfert-p-received-label').textContent = 'Destinataire reçoit';
+            document.getElementById('transfert-p-received').textContent = fmtAr(amt);
+            document.getElementById(type + '-p-total').textContent = fmtAr(amt + fee);
+        }
+    } else {
+        document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
+        document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
+        document.getElementById(type + '-p-total').textContent = fmtAr(amt + fee);
+    }
 }
 
 /* ─── Feedback ──────────────────────────────────────────────────────── */
@@ -144,20 +166,32 @@ function clearFeedback() { document.getElementById('feedback').style.display = '
 /* ─── Operations (persistées côté serveur, via ClientController::operate) ── */
 async function doOperation(type) {
     clearFeedback();
+
+    // Gestion des transferts multiples
+    if (type === 'transfert-multiple') {
+        return await doMultipleTransfert();
+    }
+
     const amtInput = document.getElementById(type + '-amount');
     const amt = parseInt(amtInput.value);
     if (!amt || amt < 100) { showFeedback(false, 'Montant minimum : 100 Ar.'); return }
 
     let target = '';
+    let includeFee = false;
+
     if (type === 'transfert') {
         target = document.getElementById('transfert-target').value.replace(/\s/g, '');
         if (target.length !== 10) { showFeedback(false, 'Numéro destinataire invalide.'); return }
         if (!PREFIXES.includes(target.slice(0, 3))) { showFeedback(false, `Préfixe ${target.slice(0, 3)} non reconnu.`); return }
         if (target === phone) { showFeedback(false, 'Impossible de vous envoyer à vous-même.'); return }
+        includeFee = document.getElementById('transfert-include-fee')?.checked || false;
     }
 
     const payload = { type, amount: amt };
-    if (type === 'transfert') payload.target = target;
+    if (type === 'transfert') {
+        payload.target = target;
+        payload.includeFee = includeFee;
+    }
 
     let result;
     try {
@@ -183,7 +217,10 @@ async function doOperation(type) {
 
     /* Reset form */
     amtInput.value = '';
-    if (type === 'transfert') document.getElementById('transfert-target').value = '';
+    if (type === 'transfert') {
+        document.getElementById('transfert-target').value = '';
+        document.getElementById('transfert-include-fee').checked = false;
+    }
     document.getElementById(type + '-preview') &&
         (document.getElementById(type + '-preview').style.display = 'none');
 
@@ -192,7 +229,9 @@ async function doOperation(type) {
     const msgs = {
         depot: `Dépôt de ${fmtAr(amt)} effectué avec succès.`,
         retrait: `Retrait de ${fmtAr(amt)} effectué. Frais : ${fmtAr(fee)}.`,
-        transfert: `${fmtAr(amt)} envoyé à ${fmtPhone(target)}. Frais : ${fmtAr(fee)}.`,
+        transfert: includeFee
+            ? `${fmtAr(amt)} envoyé à ${fmtPhone(target)} (frais inclus). Le destinataire reçoit ${fmtAr(amt - fee)}.`
+            : `${fmtAr(amt)} envoyé à ${fmtPhone(target)}. Frais : ${fmtAr(fee)}.`,
     };
     showFeedback(true, msgs[type]);
 
@@ -211,6 +250,194 @@ function switchTab(id, btn) {
     btn.classList.add('active');
     clearFeedback();
     if (id === 'history') renderHistory();
+}
+
+/* ─── Transfert mode switching ────────────────────────────────────── */
+function switchTransfertMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.mode-tab[data-mode="${mode}"]`).classList.add('active');
+
+    if (mode === 'simple') {
+        document.getElementById('transfert-simple').style.display = 'block';
+        document.getElementById('transfert-multiple').style.display = 'none';
+    } else {
+        document.getElementById('transfert-simple').style.display = 'none';
+        document.getElementById('transfert-multiple').style.display = 'block';
+    }
+
+    clearFeedback();
+}
+
+/* ─── Recipients management ───────────────────────────────────────── */
+function addRecipient() {
+    const list = document.getElementById('recipients-list');
+    const row = document.createElement('div');
+    row.className = 'recipient-row';
+    row.innerHTML = `
+        <input type="tel" class="nm-input mono-font recipient-phone" placeholder="0330000000" maxlength="10"
+            oninput="this.value=this.value.replace(/\\D/g,'').slice(0,10);updateMultipleFeePreview();clearFeedback()">
+        <button class="btn-remove-recipient" onclick="removeRecipient(this)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    list.appendChild(row);
+    updateRemoveButtonsVisibility();
+}
+
+function removeRecipient(btn) {
+    btn.parentElement.remove();
+    updateRemoveButtonsVisibility();
+    updateMultipleFeePreview();
+}
+
+function updateRemoveButtonsVisibility() {
+    const rows = document.querySelectorAll('.recipient-row');
+    rows.forEach((row, idx) => {
+        const removeBtn = row.querySelector('.btn-remove-recipient');
+        if (rows.length === 1) {
+            removeBtn.style.visibility = 'hidden';
+        } else {
+            removeBtn.style.visibility = 'visible';
+        }
+    });
+}
+
+/* ─── Multiple transfert preview ─────────────────────────────────── */
+function updateMultipleFeePreview() {
+    const amt = parseInt(document.getElementById('transfert-multiple-amount').value);
+    const preview = document.getElementById('transfert-multiple-preview');
+    const recipients = document.querySelectorAll('.recipient-phone');
+    const validRecipients = Array.from(recipients).filter(input => input.value.length === 10);
+    const includeFee = document.getElementById('transfert-multiple-include-fee')?.checked || false;
+
+    if (!amt || amt < 100 || validRecipients.length === 0) {
+        preview.style.display = 'none';
+        return;
+    }
+
+    const perPerson = Math.floor(amt / validRecipients.length);
+    const fee = getFee(SLABS_TRANSFERT, perPerson);
+    const totalFee = fee * validRecipients.length;
+
+    let amountReceived, totalDebit;
+
+    if (includeFee) {
+        // Frais inclus : on déduit les frais de chaque part
+        amountReceived = perPerson - fee;
+        totalDebit = amt; // Le montant total saisi est débité
+    } else {
+        // Frais non inclus : chaque destinataire reçoit la part complète
+        amountReceived = perPerson;
+        totalDebit = amt + totalFee;
+    }
+
+    preview.style.display = 'block';
+    document.getElementById('transfert-m-amount').textContent = fmtAr(amt);
+    document.getElementById('transfert-m-count').textContent = validRecipients.length;
+    document.getElementById('transfert-m-per-person').textContent = fmtAr(perPerson);
+    document.getElementById('transfert-m-fee').textContent = fmtAr(fee);
+    document.getElementById('transfert-m-received-label').textContent = 'Chaque destinataire reçoit';
+    document.getElementById('transfert-m-received').textContent = fmtAr(amountReceived);
+    document.getElementById('transfert-m-total-fee').textContent = fmtAr(totalFee);
+    document.getElementById('transfert-m-total').textContent = fmtAr(totalDebit);
+}
+
+/* ─── Multiple transfert execution ──────────────────────────────── */
+async function doMultipleTransfert() {
+    const amt = parseInt(document.getElementById('transfert-multiple-amount').value);
+    const recipients = Array.from(document.querySelectorAll('.recipient-phone'))
+        .map(input => input.value.replace(/\s/g, ''))
+        .filter(num => num.length === 10);
+
+    if (!amt || amt < 100) {
+        showFeedback(false, 'Montant minimum : 100 Ar.');
+        return;
+    }
+
+    if (recipients.length === 0) {
+        showFeedback(false, 'Ajoutez au moins un destinataire valide.');
+        return;
+    }
+
+    // Validation des numéros
+    for (const target of recipients) {
+        if (!PREFIXES.includes(target.slice(0, 3))) {
+            showFeedback(false, `Préfixe ${target.slice(0, 3)} non reconnu.`);
+            return;
+        }
+        if (target === phone) {
+            showFeedback(false, 'Impossible de vous envoyer à vous-même.');
+            return;
+        }
+    }
+
+    // Vérifier les doublons
+    const uniqueRecipients = [...new Set(recipients)];
+    if (uniqueRecipients.length !== recipients.length) {
+        showFeedback(false, 'Vous avez entré le même numéro plusieurs fois.');
+        return;
+    }
+
+    const perPerson = Math.floor(amt / recipients.length);
+    const fee = getFee(SLABS_TRANSFERT, perPerson);
+    const totalCost = (perPerson + fee) * recipients.length;
+
+    if (client.balance < totalCost) {
+        showFeedback(false, `Solde insuffisant. Besoin de ${fmtAr(totalCost)}.`);
+        return;
+    }
+
+    const payload = {
+        type: 'transfert-multiple',
+        amount: amt,
+        targets: recipients
+    };
+
+    let result;
+    try {
+        const res = await fetch(window.clientOperationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        result = await res.json();
+    } catch (err) {
+        showFeedback(false, 'Erreur réseau. Veuillez réessayer.');
+        return;
+    }
+
+    if (!result.success) {
+        showFeedback(false, result.message || 'Opération refusée.');
+        return;
+    }
+
+    // Mise à jour de l'état local
+    client.balance = result.balance;
+    result.transactions.forEach(tx => client.transactions.unshift(tx));
+
+    // Reset form
+    document.getElementById('transfert-multiple-amount').value = '';
+    document.querySelectorAll('.recipient-phone').forEach((input, idx) => {
+        if (idx === 0) {
+            input.value = '';
+        } else {
+            input.parentElement.remove();
+        }
+    });
+    updateRemoveButtonsVisibility();
+    document.getElementById('transfert-multiple-preview').style.display = 'none';
+
+    // Feedback
+    showFeedback(true, `${fmtAr(perPerson)} envoyé à ${recipients.length} destinataire(s). Frais total : ${fmtAr(fee * recipients.length)}.`);
+
+    // Refresh UI
+    document.getElementById('balance-display').textContent = fmtAr(client.balance);
+    renderMiniStats();
+    renderRecentTx();
+    renderHistory();
 }
 
 /* ─── Logout ────────────────────────────────────────────────────────── */
