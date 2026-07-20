@@ -59,117 +59,75 @@ CREATE TABLE Mouvement (
     idSender INTEGER,
     idReceiver INTEGER,
     dateMouvement DATETIME NOT NULL DEFAULT(datetime('now')),
+    idOperateur INTEGER NOT NULL,
     FOREIGN KEY (idTypeOperation) REFERENCES TypeOperation (id),
     FOREIGN KEY (idSender) REFERENCES compte (id),
     FOREIGN KEY (idReceiver) REFERENCES compte (id),
+    FOREIGN KEY (idOperateur) REFERENCES Operateur (id),
     CHECK (
         idSender IS NOT NULL
         OR idReceiver IS NOT NULL
     )
-);
--- ============================================================
+);-- ============================================================
 -- DONNÉES DE TEST
 -- ============================================================
 
 -- 1. Opérateurs
-INSERT INTO
-    Operateur (nom)
-VALUES ('Telma Mvola'),
+INSERT INTO Operateur (nom) VALUES
+    ('Telma Mvola'),
     ('Orange Money'),
     ('Airtel Money');
 
 -- 2. Préfixes valables par opérateur
-INSERT INTO
-    prefixOperateur (idOperateur, prefix)
-VALUES (1, '032'),
-    (1, '037'),
-    (2, '033'),
-    (2, '039'),
+INSERT INTO prefixOperateur (idOperateur, prefix) VALUES
+    (1, '032'), (1, '037'),
+    (2, '033'), (2, '039'),
     (3, '038');
 
 -- 3. Barème unique, réutilisé pour Retrait ET Transfert (même grille tarifaire)
-INSERT INTO
-    Bareme (libelle, date)
-VALUES (
-        'Barème Standard Retrait/Transfert',
-        datetime('now')
-    );
+INSERT INTO Bareme (libelle, date) VALUES
+    ('Barème Standard Retrait/Transfert', datetime('now'));
 
 -- 4. Tranches du barème (idBareme = 1), d'après le tableau fourni
-INSERT INTO
-    tranche (min, max, montant, idBareme)
-VALUES (100, 1000, 50, 1),
-    (1001, 5000, 50, 1),
-    (5001, 10000, 100, 1),
-    (10001, 25000, 200, 1),
-    (25001, 50000, 400, 1),
-    (50001, 100000, 800, 1),
-    (100001, 250000, 1500, 1),
-    (250001, 500000, 1500, 1),
-    (500001, 1000000, 2500, 1),
-    (1000001, 2000000, 3000, 1);
+INSERT INTO tranche (min, max, montant, idBareme) VALUES
+    (100,      1000,     50,   1),
+    (1001,     5000,     50,   1),
+    (5001,     10000,    100,  1),
+    (10001,    25000,    200,  1),
+    (25001,    50000,    400,  1),
+    (50001,    100000,   800,  1),
+    (100001,   250000,   1500, 1),
+    (250001,   500000,   1500, 1),
+    (500001,   1000000,  2500, 1),
+    (1000001,  2000000,  3000, 1);
 
 -- 5. Types d'opération : Dépôt gratuit (pas de barème), Retrait et Transfert
 --    partagent le MÊME idBareme = 1
-INSERT INTO
-    TypeOperation (libelle, idBareme)
-VALUES ('Depot', NULL),
+INSERT INTO TypeOperation (libelle, idBareme) VALUES
+    ('Depot', NULL),
     ('Retrait', 1),
     ('Transfert', 1);
 
-INSERT INTO
-    statusType (id, libelle)
-VALUES (1, 'actif'),
+-- 6. Statuts de compte (avant compte, à cause de la FK)
+INSERT INTO statusType (id, libelle) VALUES
+    (1, 'actif'),
     (2, 'bloque');
 
-INSERT INTO
-    compte (
-        number,
-        idStatus,
-        idOperateur,
-        solde
-    )
-VALUES ('0321234567', 1, 1, 50000),
-    ('0371234567', 1, 1, 12000),
-    ('0331234567', 1, 2, 80000),
-    ('0391234567', 2, 2, 0),
-    ('0381234567', 1, 3, 25000);
+-- 7. Comptes clients
+-- id=1,2 -> Telma (idOperateur=1) | id=3,4 -> Orange (idOperateur=2) | id=5 -> Airtel (idOperateur=3)
+INSERT INTO compte (number, idStatus, idOperateur, solde) VALUES
+    ('0321234567', 1, 1, 50000),   -- id 1, Telma
+    ('0371234567', 1, 1, 12000),   -- id 2, Telma
+    ('0331234567', 1, 2, 80000),   -- id 3, Orange
+    ('0391234567', 2, 2, 0),       -- id 4, Orange (bloqué)
+    ('0381234567', 1, 3, 25000);   -- id 5, Airtel
 
-INSERT INTO
-    Mouvement (
-        somme,
-        montantFrais,
-        idTypeOperation,
-        idSender,
-        idReceiver,
-        dateMouvement
-    )
-VALUES (
-        20000,
-        0,
-        1,
-        NULL,
-        1,
-        '2026-07-01 09:00:00'
-    ), -- dépôt de 20000 sur compte 1
-    (
-        5000,
-        50,
-        2,
-        1,
-        NULL,
-        '2026-07-02 10:15:00'
-    ), -- retrait de 5000 (tranche 1001-5000 -> 50)
-    (
-        10000,
-        200,
-        3,
-        3,
-        5,
-        '2026-07-03 14:30:00'
-    );
--- transfert de 10000 (tranche 10001-25000 -> 200)
-
+-- 8. Mouvements (historique) : dépôt, retrait, transfert
+-- idOperateur = l'opérateur qui gère/prélève l'opération (celui du compte concerné)
+INSERT INTO Mouvement (somme, montantFrais, idTypeOperation, idSender, idReceiver, dateMouvement, idOperateur) VALUES
+    (20000, 0,  1, NULL, 1, '2026-07-01 09:00:00', 1),  -- dépôt de 20000 sur compte 1 (Telma)
+    (5000,  50, 2, 1,    NULL, '2026-07-02 10:15:00', 1),  -- retrait de 5000 sur compte 1 (Telma) -> frais 50
+    (10000, 200, 3, 1,   2, '2026-07-03 14:30:00', 1);     -- transfert de 10000 entre compte 1 et 2, tous deux Telma -> frais 200
 CREATE INDEX idx_mouvement_sender ON Mouvement (idSender);
 
 CREATE INDEX idx_mouvement_receiver ON Mouvement (idReceiver);
