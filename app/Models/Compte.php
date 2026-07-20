@@ -115,4 +115,10 @@ class Compte extends Model
 
         return $comptes;
     }
+
+    public function getOperateurIdByCompteId(int $idCompte): ?int
+    {
+        $compte = $this->find($idCompte);
+        return $compte['idOperateur'] ?? null;
+    }
 }

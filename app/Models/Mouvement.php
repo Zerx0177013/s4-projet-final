@@ -15,7 +15,7 @@ class Mouvement extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['idOperateur', 'somme', 'montantFrais', 'idTypeOperation', 'idSender', 'idReceiver', 'dateMouvement'];
+    protected $allowedFields    = ['montantCommission', 'idOperateur', 'somme', 'montantFrais', 'idTypeOperation', 'idSender', 'idReceiver', 'dateMouvement'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -112,7 +112,8 @@ class Mouvement extends Model
      *
      * @throws RuntimeException si l'opération ne peut pas être réalisée.
      */
-    public function enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null): array
+
+     public function enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null): array
     {
         if (! in_array($type, self::TYPES, true)) {
             throw new RuntimeException("Type d'opération invalide.");
@@ -133,16 +134,22 @@ class Mouvement extends Model
         $fee          = $typeOperation['idBareme'] !== null
             ? $trancheModel->findFeeForAmount((int) $typeOperation['idBareme'], $amount)
             : 0.0;
+        
+
 
         $compteModel = new Compte();
         $target      = null;
-
+        $operateurModel = new Operateur();
+        $commissionFee = 0.0; 
+        $OperatorTarget = null;
         if ($type === 'transfert') {
             if ($targetNumber === $compte['number']) {
                 throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
             }
 
             $target = $targetNumber !== null ? $compteModel->findByNumber($targetNumber) : null;
+            $OperatorSender = $compteModel->getOperateurIdByCompteId($compte['idOperateur']);
+            $OperatorTarget = $compteModel->getOperateurIdByCompteId($target['idOperateur']);
 
             if ($target === null) {
                 throw new RuntimeException('Compte destinataire introuvable.');
@@ -150,6 +157,11 @@ class Mouvement extends Model
 
             if ((int) $target['idStatus'] !== 1) {
                 throw new RuntimeException('Le compte destinataire est bloqué.');
+            }
+
+            if($OperatorSender !== $OperatorTarget){
+                $pourcentage = $operateurModel->getPourcentageCommission($OperatorTarget);
+                $commissionFee = $amount * $pourcentage / 100;
             }
         }
 
@@ -170,16 +182,18 @@ class Mouvement extends Model
             'idSender'        => $idSender,
             'idReceiver'      => $idReceiver,
             'idOperateur'     => $compte['idOperateur'],
+            'montantCommission' => $commissionFee
         ]);
 
         $newBalance = match ($type) {
             'depot'     => $compteModel->ajusterSolde($compte['id'], $amount),
             'retrait'   => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
-            'transfert' => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
+            'transfert' => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee + $commissionFee)),
         };
 
         if ($type === 'transfert') {
             $compteModel->ajusterSolde($target['id'], $amount);
+            $operateurModel->AddToMontantCommission($OperatorTarget, $commissionFee);
         }
 
         $db->transComplete();
@@ -200,6 +214,95 @@ class Mouvement extends Model
             ],
         ];
     }
+
+    // public function enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null): array
+    // {
+    //     if (! in_array($type, self::TYPES, true)) {
+    //         throw new RuntimeException("Type d'opération invalide.");
+    //     }
+
+    //     if ($amount < 100) {
+    //         throw new RuntimeException('Montant minimum : 100 Ar.');
+    //     }
+
+    //     $typeOperationModel = new TypeOperation();
+    //     $typeOperation      = $typeOperationModel->findByLibelle(ucfirst($type));
+
+    //     if ($typeOperation === null) {
+    //         throw new RuntimeException("Type d'opération non configuré.");
+    //     }
+
+    //     $trancheModel = new Tranche();
+    //     $fee          = $typeOperation['idBareme'] !== null
+    //         ? $trancheModel->findFeeForAmount((int) $typeOperation['idBareme'], $amount)
+    //         : 0.0;
+
+    //     $compteModel = new Compte();
+    //     $target      = null;
+
+    //     if ($type === 'transfert') {
+    //         if ($targetNumber === $compte['number']) {
+    //             throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
+    //         }
+
+    //         $target = $targetNumber !== null ? $compteModel->findByNumber($targetNumber) : null;
+
+    //         if ($target === null) {
+    //             throw new RuntimeException('Compte destinataire introuvable.');
+    //         }
+
+    //         if ((int) $target['idStatus'] !== 1) {
+    //             throw new RuntimeException('Le compte destinataire est bloqué.');
+    //         }
+    //     }
+
+    //     if ($type !== 'depot' && (float) $compte['solde'] < $amount + $fee) {
+    //         throw new RuntimeException('Solde insuffisant.');
+    //     }
+
+    //     $db = Database::connect();
+    //     $db->transStart();
+
+    //     $idSender   = $type === 'depot' ? null : $compte['id'];
+    //     $idReceiver = $type === 'retrait' ? null : ($type === 'transfert' ? $target['id'] : $compte['id']);
+
+    //     $this->insert([
+    //         'somme'           => $amount,
+    //         'montantFrais'    => $fee,
+    //         'idTypeOperation' => $typeOperation['id'],
+    //         'idSender'        => $idSender,
+    //         'idReceiver'      => $idReceiver,
+    //         'idOperateur'     => $compte['idOperateur'],
+    //     ]);
+
+    //     $newBalance = match ($type) {
+    //         'depot'     => $compteModel->ajusterSolde($compte['id'], $amount),
+    //         'retrait'   => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
+    //         'transfert' => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
+    //     };
+
+    //     if ($type === 'transfert') {
+    //         $compteModel->ajusterSolde($target['id'], $amount);
+    //     }
+
+    //     $db->transComplete();
+
+    //     if ($db->transStatus() === false) {
+    //         throw new RuntimeException('Une erreur est survenue, veuillez réessayer.');
+    //     }
+
+    //     return [
+    //         'balance'     => $newBalance,
+    //         'transaction' => [
+    //             'type'          => $type,
+    //             'amount'        => $amount,
+    //             'fee'           => $fee,
+    //             'date'          => date('d/m/Y H:i'),
+    //             'to'            => $type === 'transfert' ? $target['number'] : null,
+    //             'balance_after' => $newBalance,
+    //         ],
+    //     ];
+    // }
 
     /**
      * Historique complet des mouvements d'un compte (émetteur ou destinataire),
