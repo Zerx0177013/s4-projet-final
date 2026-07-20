@@ -121,3 +121,94 @@ Cette partie décrit tous les changements ajoutés après la V1.
 - [x] Transmission de `includeFee` vers `Mouvement::enregistrerOperation()`.
 - [x] Gestion du transfert multiple via `enregistrerMultipleTransferts()`.
 - [x] Maintien du calcul des frais de tranche côté client et côté serveur.
+
+## Fonctionnalités client V2
+
+### Option "Inclure les frais de retrait"
+
+- [x] Ajout d'une case à cocher dans le formulaire de transfert simple.
+- [x] Modification de `Mouvement::enregistrerOperation()` pour gérer le paramètre `$includeFee`.
+- [x] Calcul des frais de retrait du destinataire via `TypeOperation` et `Tranche`.
+- [x] Ajout des frais de retrait au montant reçu par le destinataire (`$amountReceived = $amount + $retraitFee`).
+- [x] Ajout des frais de retrait au total des frais (`$fee += $retraitFee`).
+- [x] Correction du calcul de `$totalCost` pour inclure tous les frais (transfert + retrait + commission).
+- [x] Mise à jour de la prévisualisation JavaScript pour afficher les deux frais séparément.
+- [x] Affichage détaillé : "50 Ar + 50 Ar (retrait)" dans la prévisualisation.
+- [x] Message de confirmation adapté indiquant le montant réellement reçu par le destinataire.
+
+**Logique métier :**
+- Sans option cochée : Émetteur paie `Montant + Frais transfert`, destinataire reçoit `Montant`.
+- Avec option cochée : Émetteur paie `Montant + Frais transfert + Frais retrait`, destinataire reçoit `Montant + Frais retrait`.
+- Le destinataire peut ainsi retirer son argent sans payer de frais supplémentaires.
+
+### Transferts multiples
+
+- [x] Ajout d'un système d'onglets (Simple/Multiple) dans l'interface de transfert.
+- [x] Création de la fonction `enregistrerMultipleTransferts()` dans le modèle `Mouvement`.
+- [x] Gestion de l'ajout et de la suppression dynamique de destinataires via JavaScript.
+- [x] Calcul automatique du montant par personne (`Math.floor(totalAmount / count)`).
+- [x] Calcul des frais par transfert en fonction du montant individuel.
+- [x] Validation côté serveur : vérification des doublons, préfixes valides, solde suffisant.
+- [x] Validation côté client : affichage d'erreurs pour les numéros invalides ou les doublons.
+- [x] Transaction atomique pour garantir que tous les transferts réussissent ou échouent ensemble.
+- [x] Mise à jour du solde de l'émetteur en une seule opération (`-totalCost`).
+- [x] Mise à jour du solde de chaque destinataire individuellement.
+- [x] Retour d'un tableau de transactions pour mise à jour de l'historique client.
+- [x] Gestion de la prévisualisation en temps réel avec détails des frais totaux.
+- [x] Affichage du nombre de destinataires, montant par personne et frais cumulés.
+- [x] Bouton "×" pour supprimer un destinataire (masqué automatiquement s'il n'en reste qu'un).
+- [x] Message de confirmation groupé après l'envoi réussi.
+
+**Flux complet :**
+1. Client saisit un montant total et ajoute plusieurs numéros de destinataires.
+2. Le montant est divisé équitablement (ex: 30 000 Ar ÷ 3 = 10 000 Ar chacun).
+3. Les frais sont calculés par transfert (ex: 500 Ar × 3 = 1 500 Ar).
+4. Validation de tous les comptes destinataires avant l'exécution.
+5. Exécution dans une transaction SQL unique (rollback en cas d'erreur).
+6. Mise à jour de l'historique avec une transaction par destinataire.
+
+### Commission inter-opérateur
+
+- [x] Ajout du champ `montantCommission` dans la table `Mouvement`.
+- [x] Récupération du pourcentage de commission de l'opérateur destinataire via `Operateur::getPourcentageCommission()`.
+- [x] Calcul de la commission en fonction du montant envoyé (`$amount * $pourcentage / 100`).
+- [x] Ajout de la commission au coût total de l'émetteur.
+- [x] Versement de la commission à l'opérateur destinataire via `Operateur::AddToMontantCommission()`.
+- [x] Transmission des données de préfixes avec ID et pourcentage de commission au frontend.
+- [x] Détection automatique de l'opérateur destinataire via le préfixe du numéro.
+- [x] Affichage conditionnel d'une ligne "Commission inter-opérateur" dans la prévisualisation.
+- [x] Masquage automatique de cette ligne si les deux comptes appartiennent au même opérateur.
+- [x] Ajout de la commission dans la réponse JSON de `ClientController::operate()`.
+- [x] Mise à jour de `ClientController::dashboard()` pour transmettre les données de préfixes avec opérateurs.
+- [x] Utilisation de `PREFIXES_DATA` côté JavaScript pour stocker l'ID opérateur et le pourcentage.
+
+**Calcul de la commission :**
+- Si émetteur et destinataire ont le même opérateur : commission = 0.
+- Si opérateurs différents : commission = `montant × pourcentage_operateur_destinataire`.
+- La commission s'ajoute au total débité de l'émetteur.
+- La commission est enregistrée dans la table `Mouvement` pour traçabilité.
+- Le montant de commission cumulé de l'opérateur est mis à jour en base.
+
+### Améliorations interface utilisateur
+
+- [x] Ajout d'une fonction `updateFeePreview()` enrichie pour gérer les trois cas (retrait, transfert simple, transfert avec commission).
+- [x] Affichage des frais décomposés (transfert + retrait) dans un format lisible.
+- [x] Mise à jour du message de feedback pour utiliser `amountReceived` renvoyé par le backend.
+- [x] Prévisualisation en temps réel qui s'adapte selon la case "inclure frais" et le destinataire.
+- [x] Gestion dynamique de la visibilité de la ligne commission selon l'opérateur destinataire.
+- [x] Ajout de styles CSS pour les onglets de mode transfert (`.mode-tab`, `.transfert-mode-tabs`).
+- [x] Ajout de styles pour la liste de destinataires (`.recipient-row`, `.btn-add-recipient`, `.btn-remove-recipient`).
+- [x] Ajout de styles pour la case à cocher personnalisée (`.nm-checkbox`).
+- [x] Animations et transitions fluides lors du changement de mode.
+- [x] Messages d'erreur spécifiques pour chaque type de validation (doublons, préfixes, solde).
+
+### Sécurité et cohérence
+
+- [x] Validation côté serveur de tous les paramètres reçus en AJAX.
+- [x] Protection contre les doublons de destinataires.
+- [x] Vérification que le client ne s'envoie pas d'argent à lui-même.
+- [x] Vérification du statut actif de tous les comptes destinataires.
+- [x] Utilisation de transactions SQL pour garantir l'atomicité des opérations multiples.
+- [x] Rollback automatique en cas d'erreur pendant l'exécution.
+- [x] Calcul précis du coût total avant vérification du solde.
+- [x] Enregistrement cohérent des montants et frais dans la base de données.

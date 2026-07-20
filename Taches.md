@@ -1,5 +1,7 @@
 # Informations
+
 Details dans todo.md
+
 - Rohan ETU003918
 - Noah ETU004351
 
@@ -46,6 +48,9 @@ Details dans todo.md
 - [x] fonction getHistoriqueCompte($idUser) (Noah)
 
 ## Version 2
+
+### Operator
+
 - [x] Ajouter une colonne pourcentageCommission dans Operateur
 - [x] Ajouter une colonne montantCommission dans mouvement et Operateur
 - [x] Configuration des préfixes valable pour les autres opérateurs (ex: 032 et 031, …) Dans la V1 (Rohan)
@@ -58,8 +63,27 @@ Details dans todo.md
   - [x] ajouter dans la base la commission
 - [x] Sur la page “Situation gain via les différents frais” , séparer opérateur et autres opérateurs dans la V1 (Rohan)
 - [x] Situation des montants à envoyer à chaque opérateur dans la V1 (Rohan)
-  - [x] fonction qui somme toutes les commissions d'un operateur/getCommission directement 
+  - [x] fonction qui somme toutes les commissions d'un operateur/getCommission directement
 
+### Client
+
+- [x] Option "Inclure les frais de retrait" dans le transfert simple (Noah)
+  - [x] Case à cocher qui ajoute les frais de retrait au total
+  - [x] Émetteur paie : Montant + Frais transfert + Frais retrait
+  - [x] Destinataire reçoit : Montant + Frais retrait (pour retirer sans frais)
+  - [x] Prévisualisation en temps réel avec détail des frais
+- [x] Transferts multiples vers plusieurs destinataires (Noah)
+  - [x] Deux modes : Simple et Multiple (onglets)
+  - [x] Ajout/suppression dynamique de destinataires
+  - [x] Division équitable du montant total
+  - [x] Calcul des frais par transfert
+  - [x] Validation des doublons et préfixes
+  - [x] Transaction atomique (tout ou rien)
+- [x] Affichage de la commission inter-opérateur (Noah)
+  - [x] Détection automatique si opérateurs différents
+  - [x] Ligne "Commission inter-opérateur" dans la prévisualisation
+  - [x] Commission calculée en % et versée à l'opérateur destinataire
+  - [x] Ajout au total débité de l'émetteur
 
 ## Frontend
 
