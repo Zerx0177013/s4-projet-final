@@ -184,26 +184,34 @@
                 <div class="page-title">Situation des gains</div>
                 <div class="page-subtitle">Revenus générés via les frais d'opérations.</div>
 
+                <?php
+                    // Fournies par DashboardController::afficherGainParOperateur()
+                    // (extraites de $answer = ['Depot' => .., 'Retrait' => .., 'Transfert' => .., 'total' => ..])
+                    $gainRetrait = $Retrait ?? 0;
+                    $gainTransfert = $Transfert ?? 0;
+                    $gainDepot = $Depot ?? 0;
+                    $gainTotal = $total ?? ($gainRetrait + $gainTransfert + $gainDepot);
+                ?>
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-sm-4">
                         <div class="stat-card"
                             style="background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2)">
                             <div class="stat-label">Gains Retraits</div>
-                            <div class="stat-value" style="color:#F87171" id="gain-retrait">0 Ar</div>
+                            <div class="stat-value" style="color:#F87171" id="gain-retrait"><?= number_format($gainRetrait, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-4">
                         <div class="stat-card"
                             style="background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.2)">
                             <div class="stat-label">Gains Transferts</div>
-                            <div class="stat-value" style="color:#60A5FA" id="gain-transfert">0 Ar</div>
+                            <div class="stat-value" style="color:#60A5FA" id="gain-transfert"><?= number_format($gainTransfert, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-4">
                         <div class="stat-card"
                             style="background:rgba(0,214,143,.05);border:1px solid rgba(0,214,143,.2)">
                             <div class="stat-label">Total Gains</div>
-                            <div class="stat-value" style="color:#00D68F" id="gain-total">0 Ar</div>
+                            <div class="stat-value" style="color:#00D68F" id="gain-total"><?= number_format($gainTotal, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
                 </div>
@@ -253,6 +261,12 @@
 
     <script>
         window.operatorAccounts = <?= json_encode($comptes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+        window.operatorGains = <?= json_encode([
+            'depot' => $gainDepot,
+            'retrait' => $gainRetrait,
+            'transfert' => $gainTransfert,
+            'total' => $gainTotal,
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     </script>
     <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('js/operateur.js') ?>"></script>
