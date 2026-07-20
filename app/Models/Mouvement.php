@@ -192,7 +192,7 @@ class Mouvement extends Model
         $totalCost = match ($type) {
             'depot' => 0.0,
             'retrait' => $amount + $fee,
-            'transfert' => ($includeFee ? $amount : $amount + $fee) + $commissionFee,
+            'transfert' => $amount + $fee + $commissionFee,
         };
 
         if ($type !== 'depot' && (float) $compte['solde'] < $totalCost) {
