@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Compte;
 use App\Models\Mouvement;
+use App\Models\PrefixOperateur;
 
 class CompteController extends BaseController
 {
@@ -17,15 +18,15 @@ class CompteController extends BaseController
 
         $compteModel = new Compte();
         $mouvementModel = new Mouvement();
+        $prefixModel = new PrefixOperateur();
 
-        // Gains de l'opérateur, pour que l'onglet "Gains" du tableau de bord soit
-        // aussi rempli lorsqu'on arrive sur cette page (même vue operator/operator).
         $gains = $mouvementModel->calculGainParOperateur($idOperateur);
         $gains['total'] = array_sum($gains);
         $gains['liste'] = $mouvementModel->getMouvementDetails($idOperateur);
 
         $data = array_merge($gains, [
-            'comptes' => $compteModel->getComptesAvecTransactions($idOperateur),
+            'comptes'  => $compteModel->getComptesAvecTransactions($idOperateur),
+            'prefixes' => $prefixModel->getPrefixesByOperateur($idOperateur),
         ]);
 
         return view('operator/operator', $data);

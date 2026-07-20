@@ -17,4 +17,10 @@ class PrefixOperateur extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
+    public function getPrefixesByOperateur(int $idOperateur): array
+    {
+        return $this->where('idOperateur', $idOperateur)
+            ->orderBy('prefix', 'ASC')
+            ->findAll();
+    }
 }

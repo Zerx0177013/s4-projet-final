@@ -55,7 +55,9 @@ foreach (($liste ?? []) as $mouvement) {
         <!-- Main -->
         <main class="main-content">
 
-            <?= view('operator/partials/tab_prefixes') ?>
+            <?= view('operator/partials/tab_prefixes', [
+                'prefixes' => $prefixes ?? [],
+            ]) ?>
 
             <?= view('operator/partials/tab_operations') ?>
 

@@ -14,5 +14,9 @@ $routes->get('/operator/logout', 'OperateurController::deconnecter');
 $routes->get('/operator/dashboard', 'CompteController::afficherComptes');
 $routes->get('/operator/gains', 'DashboardController::afficherGainParOperateur');
 
+// Préfixes de l'opérateur (CRUD, lié à l'idOperateur en session)
+$routes->post('/operator/prefixes/ajouter', 'PrefixeController::ajouter');
+$routes->get('/operator/prefixes/supprimer/(:num)', 'PrefixeController::supprimer/$1');
+
 $routes->get('/client/login', 'ClientController::login');
 $routes->get('/client/dashboard', 'ClientController::dashboard');
