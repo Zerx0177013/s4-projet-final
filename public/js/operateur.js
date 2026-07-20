@@ -1,64 +1,7 @@
 /* ─── Data ─────────────────────────────────────────────────────────── */
-let prefixes = ['033', '034', '037', '038'];
-
-const BASE_SLABS = [
-    { min: 100, max: 1000, fee: 50 },
-    { min: 1001, max: 5000, fee: 50 },
-    { min: 5001, max: 10000, fee: 100 },
-    { min: 10001, max: 25000, fee: 200 },
-    { min: 25001, max: 50000, fee: 400 },
-    { min: 50001, max: 100000, fee: 800 },
-    { min: 100001, max: 250000, fee: 1500 },
-    { min: 250001, max: 500000, fee: 1500 },
-    { min: 500001, max: 1000000, fee: 2500 },
-    { min: 1000001, max: 2000000, fee: 3000 },
-];
-
-const operations = [
-    { id: 'depot', name: 'Dépôt', color: '#34D399', hasFees: false, slabs: [] },
-    { id: 'retrait', name: 'Retrait', color: '#F87171', hasFees: true, slabs: BASE_SLABS.map(s => ({ ...s })) },
-    { id: 'transfert', name: 'Transfert', color: '#60A5FA', hasFees: true, slabs: BASE_SLABS.map(s => ({ ...s, fee: Math.round(s.fee * .7) })) },
-];
-
-const clients = [
-    {
-        phone: '0331234567', name: 'Rakoto Jean', balance: 450000,
-        transactions: [
-            { type: 'depot', amount: 500000, fee: 0, date: '18/07/2026 09:14' },
-            { type: 'retrait', amount: 50000, fee: 800, date: '19/07/2026 14:22' },
-        ]
-    },
-    {
-        phone: '0371234567', name: 'Rasoa Marie', balance: 125000,
-        transactions: [
-            { type: 'depot', amount: 200000, fee: 0, date: '15/07/2026 10:00' },
-            { type: 'retrait', amount: 75000, fee: 800, date: '17/07/2026 11:30' },
-        ]
-    },
-    {
-        phone: '0332345678', name: 'Rabe Pierre', balance: 78500,
-        transactions: [
-            { type: 'depot', amount: 100000, fee: 0, date: '16/07/2026 08:45' },
-            { type: 'transfert', amount: 20000, fee: 140, date: '18/07/2026 15:10' },
-        ]
-    },
-    {
-        phone: '0373456789', name: 'Andry Lala', balance: 320000,
-        transactions: [
-            { type: 'depot', amount: 500000, fee: 0, date: '14/07/2026 12:00' },
-            { type: 'retrait', amount: 180000, fee: 1500, date: '16/07/2026 14:00' },
-        ]
-    },
-    {
-        phone: '0334567890', name: 'Mialy Hery', balance: 55000,
-        transactions: [
-            { type: 'depot', amount: 100000, fee: 0, date: '20/07/2026 08:00' },
-            { type: 'transfert', amount: 45000, fee: 315, date: '20/07/2026 09:30' },
-        ]
-    },
-];
 
 const accountClients = Array.isArray(window.operatorAccounts) ? window.operatorAccounts : [];
+const operatorGains = window.operatorGains || { depot: 0, retrait: 0, transfert: 0, total: 0 };
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */
 function fmtAr(n) { return new Intl.NumberFormat('fr-FR').format(n) + ' Ar' }
@@ -168,14 +111,19 @@ function updateFee(opId, idx, val) {
 
 /* ─── Gains ─────────────────────────────────────────────────────────── */
 function renderGains() {
-    let totalR = 0, totalT = 0;
+    // Totaux réels, fournis par DashboardController::afficherGainParOperateur() via window.operatorGains
+    document.getElementById('gain-retrait').textContent = fmtAr(operatorGains.retrait || 0);
+    document.getElementById('gain-transfert').textContent = fmtAr(operatorGains.transfert || 0);
+    document.getElementById('gain-total').textContent = fmtAr(operatorGains.total || 0);
+
+    // Détail par client : pas fourni par afficherGainParOperateur (agrégat par opérateur uniquement),
+    // on continue d'afficher la répartition à partir des données de démonstration.
     const rows = clients.map(c => {
         let r = 0, t = 0;
         c.transactions.forEach(tx => {
             if (tx.type === 'retrait') r += tx.fee;
             if (tx.type === 'transfert') t += tx.fee;
         });
-        totalR += r; totalT += t;
         return `<tr>
         <td>
             <div style="font-weight:500">${c.name}</div>
@@ -187,9 +135,6 @@ function renderGains() {
     </tr>`;
     }).join('');
     document.getElementById('gains-tbody').innerHTML = rows;
-    document.getElementById('gain-retrait').textContent = fmtAr(totalR);
-    document.getElementById('gain-transfert').textContent = fmtAr(totalT);
-    document.getElementById('gain-total').textContent = fmtAr(totalR + totalT);
 }
 
 /* ─── Accounts ──────────────────────────────────────────────────────── */
