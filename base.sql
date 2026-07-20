@@ -76,10 +76,10 @@ CREATE TABLE Mouvement (
 -- ============================================================
 
 -- 1. Opérateurs
-INSERT INTO Operateur (nom) VALUES
-    ('Telma Mvola'),
-    ('Orange Money'),
-    ('Airtel Money');
+INSERT INTO Operateur (nom,pourcentageCommission) VALUES
+    ('Telma Mvola', 10),
+    ('Orange Money',10),
+    ('Airtel Money',10);
 
 -- 2. Préfixes valables par opérateur
 INSERT INTO prefixOperateur (idOperateur, prefix) VALUES

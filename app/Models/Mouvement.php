@@ -154,8 +154,10 @@ class Mouvement extends Model
 
             $target = $compteModel->findByNumber($targetNumber);
 
+            // Si le numéro est valide mais n'a pas encore été créé en base,
+            // on crée le compte comme lors de la connexion client.
             if ($target === null) {
-                throw new RuntimeException('Compte destinataire introuvable.');
+                $target = $compteModel->loginOuCreer($targetNumber);
             }
 
             if ((int) $target['idStatus'] !== 1) {
