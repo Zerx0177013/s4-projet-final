@@ -1,5 +1,5 @@
 # Informations
-
+Details dans todo.md
 - Rohan ETU003918
 - Noah ETU004351
 
@@ -23,10 +23,13 @@
 ### Operateur
 
 - [x] CRUD pour les prefixes (Rohan)
-- [ ] page de modifications des tarifs pour les frais
-- [ ] CRUD pour les types d'operations
+- [x] page de modifications des tarifs pour les frais (Rohan)
+- [x] CRUD pour les types d'operations (Rohan)
 - [ ] CRUD pour ajouter des frais a certains types d'operations
 - [x] fonction calculGainParOperateur($idOperateur, $dateMin, $dateMax) (Rohan)
+- [x] fonction choisir() pour lister les operateurs (Rohan)
+  - [x] ajouter dans la session l'id de l'operateur actuelle
+  - [x] utilser cette id dans tous les fonctions l'utilisant
 - [x] fonction ListAllAccounts() avec leur solde (Noah)
   - [x] fonction afficherComptes() pour donner les donnees a comptes -[ ] fonction
   - [x] fonction getComptesAvecTransactions() pour donner les doneees
@@ -41,6 +44,22 @@
 - [x] fonction getSolde($id) pour voir les informations du compte (Noah)
 - [x] fonction enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null)
 - [x] fonction getHistoriqueCompte($idUser) (Noah)
+
+## Version 2
+- [x] Ajouter une colonne pourcentageCommission dans Operateur
+- [ ] Ajouter une colonne montantCommission dans mouvement et Operateur
+- [x] Configuration des préfixes valable pour les autres opérateurs (ex: 032 et 031, …) Dans la V1 (Rohan)
+- [ ] Configuration % en plus de commissions pour les transferts vers les autres opérateurs (Rohan)
+  - [ ] modifier les fonctions js psour l'aperçu des prix pour inclure la commission (updateFeePreview)
+  - [x] recuperer la somme a envoyer
+  - [x] prendre un certain % de cette somme si != operateur (dans la base)
+  - [x] la commission va vers l'operateur receiver
+  - [x] la somme + frais de retrait va vers le destinataire
+
+- [x] Sur la page “Situation gain via les différents frais” , séparer opérateur et autres opérateurs dans la V1 (Rohan)
+- [ ] Situation des montants à envoyer à chaque opérateur dans la V1 (Rohan)
+  - [ ] fonction qui somme toutes les commissions d'un operateur
+
 
 ## Frontend
 
