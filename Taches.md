@@ -41,21 +41,45 @@
 - [ ] fonction transferer($idUser,$idReceiver,$montant)
 - [ ] fonction getHistorique($idUser)
 
-# Frontend
+## Frontend
 
-- [x] creation de template avec figma make
-- [x] creation des 4 pages principales 
-  - [x] index.html  
-  - [x] client-dashboard 
-  - [x] client-login 
-  - [x] operator.html
-- [x] creation des 4 pages pour les css
-  - [x] index.css  
-  - [x] client-dashboard.css 
-  - [x] client-login.css 
-  - [x] operator.css
-- [x] creation des 4 pages js pour les controle cote front : 
-  - [x] index.js  
-  - [x] client-dashboard.js 
-  - [x] client-login.js 
-  - [x] operator.js
+    [x] Création de template avec Figma Make
+
+    [x] Création des 4 pages principales : index.html, client-dashboard.html, client-login.html, operator.html
+
+    [x] Création des 4 feuilles de style : index.css, client-dashboard.css, client-login.css, operator.css
+
+    [x] Création des 4 fichiers JS : index.js, client-dashboard.js, client-login.js, operator.js
+
+## Frontend (JS) — Fonctions expliquées (Logique statique)
+
+- [x]templates/js/client-login.js
+
+- [x] showError(msg) : Affiche le message d'erreur dans le bloc #login-error et met à jour #login-error-msg.
+
+- [x] clearError() : Masque le bloc d'erreur lors de la saisie utilisateur.
+  - [x] handleLogin(e) : Valide le numéro de téléphone (format 10 chiffres + préfixe autorisé), stocke le numéro dans sessionStorage et gère la redirection vers le dashboard.
+
+- [x]templates/js/operateur.js
+
+- [x] fmtAr(n) : Formate un nombre au format monétaire (fr-FR) avec le suffixe "Ar".
+
+- [x] fmtPhone(p) : Applique un masque d'affichage lisible aux numéros de 10 chiffres.
+
+- [x] switchTab(id, btn) : Gère la navigation entre les onglets de l'interface opérateur, met à jour la classe .active et déclenche le rendu des données nécessaires (Gains/Comptes).
+
+- [x] renderPrefixes() : Génère dynamiquement la grille des préfixes autorisés dans #prefix-grid.
+
+- [x] addPrefix() : Vérifie la validité d'un nouveau préfixe et met à jour l'affichage de la grille.
+
+- [x] deletePrefix(p) : Supprime un préfixe du tableau local et rafraîchit la vue.
+
+- [x] renderOperations() : Génère la liste des types d'opérations et leurs barèmes de frais (inputs éditables).
+
+- [x] toggleOp(id) : Gère l'ouverture/fermeture des accordéons d'opérations.
+
+- [x] updateFee(opId, idx, val) : Met à jour la valeur des frais dans le tableau de données en mémoire.
+
+- [x] renderGains() : Calcule les totaux de frais (retrait/transfert) à partir des données clients statiques et affiche le tableau des gains.
+
+- [x] renderAccounts() : Affiche la liste des comptes (nom, solde, transactions) dans le tableau #accounts-tbody.
