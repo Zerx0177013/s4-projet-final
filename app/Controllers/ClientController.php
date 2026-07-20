@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Compte;
 use App\Models\Mouvement;
+use App\Models\Operateur;
 use App\Models\PrefixOperateur;
 use App\Models\Tranche;
 use App\Models\TypeOperation;
@@ -73,12 +74,26 @@ class ClientController extends BaseController
 
         $mouvementModel = new Mouvement();
         $prefixModel    = new PrefixOperateur();
+        $operateurModel = new Operateur();
+
+        // Récupérer les préfixes avec leurs opérateurs pour détecter les transferts inter-opérateurs
+        $allPrefixes = $prefixModel->findAll();
+        
+        $prefixesData = [];
+        foreach ($allPrefixes as $p) {
+            $operateur = $operateurModel->find($p['idOperateur']);
+            $prefixesData[$p['prefix']] = [
+                'operateurId' => (int)$p['idOperateur'],
+                'commission' => (float)($operateur['pourcentageCommission'] ?? 0)
+            ];
+        }
 
         return view('client/dashboard', [
             'compte'   => $compte,
             'feeSlabs' => $feeSlabs,
             'history'  => $mouvementModel->getHistoriqueCompte((int) $compte['id'], (float) $compte['solde']),
-            'prefixes' => array_column($prefixModel->findAll(), 'prefix'),
+            'prefixes' => array_column($allPrefixes, 'prefix'),
+            'prefixesData' => $prefixesData,
         ]);
     }
 

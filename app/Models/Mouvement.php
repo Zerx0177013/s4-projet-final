@@ -169,7 +169,17 @@ class Mouvement extends Model
                     throw new RuntimeException('Montant insuffisant pour couvrir les frais.');
                 }
 
-                $amountReceived = $amount - $fee;
+                // Ajouter les frais de retrait du destinataire
+                $typeOperationRetrait = $typeOperationModel->findByLibelle('Retrait');
+                $retraitFee = 0.0;
+                if ($typeOperationRetrait !== null && $typeOperationRetrait['idBareme'] !== null) {
+                    $retraitFee = $trancheModel->findFeeForAmount((int) $typeOperationRetrait['idBareme'], $amount);
+                }
+
+                // Le destinataire reçoit le montant + frais de retrait pour pouvoir retirer sans frais
+                $amountReceived = $amount + $retraitFee;
+                // On ajoute les frais de retrait au coût total pour l'émetteur
+                $fee += $retraitFee;
             }
 
             $targetOperatorId = (int) $target['idOperateur'];
@@ -182,7 +192,7 @@ class Mouvement extends Model
         $totalCost = match ($type) {
             'depot' => 0.0,
             'retrait' => $amount + $fee,
-            'transfert' => ($includeFee ? $amount : $amount + $fee) + $commissionFee,
+            'transfert' => $amount + $fee + $commissionFee,
         };
 
         if ($type !== 'depot' && (float) $compte['solde'] < $totalCost) {
