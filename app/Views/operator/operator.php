@@ -1,4 +1,36 @@
-<?php helper('url'); ?>
+<?php
+helper('url');
+
+// Ces valeurs sont fournies par DashboardController::afficherGainParOperateur()
+// (extraites de $answer = ['Depot' => .., 'Retrait' => .., 'Transfert' => .., 'total' => .., 'liste' => [...]])
+// et transmises explicitement au partiel operator/partials/tab_gains.
+$gainRetrait = $Retrait ?? 0;
+$gainTransfert = $Transfert ?? 0;
+$gainDepot = $Depot ?? 0;
+$gainTotal = $total ?? ($gainRetrait + $gainTransfert + $gainDepot);
+
+// Regroupement du détail par client à partir de $liste
+// (fournie par Mouvement::getMouvementDetails()), transmis explicitement
+// au partiel operator/partials/tab_gains.
+$clientsGains = [];
+foreach (($liste ?? []) as $mouvement) {
+    $clientId = $mouvement['idSender'] ?? $mouvement['idReceiver'] ?? null;
+    if ($clientId === null) {
+        continue;
+    }
+
+    if (!isset($clientsGains[$clientId])) {
+        $clientsGains[$clientId] = ['retrait' => 0, 'transfert' => 0];
+    }
+
+    $frais = (float) ($mouvement['montantFrais'] ?? 0);
+    if (($mouvement['typeLibelle'] ?? '') === 'Retrait') {
+        $clientsGains[$clientId]['retrait'] += $frais;
+    } elseif (($mouvement['typeLibelle'] ?? '') === 'Transfert') {
+        $clientsGains[$clientId]['transfert'] += $frais;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -15,262 +47,37 @@
 
 <body>
 
-    <!-- Mobile nav -->
-    <div class="mobile-topnav" style="display:none">
-        <button class="nav-btn active" data-tab="prefixes" onclick="switchTab('prefixes',this)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="9" x2="20" y2="9" />
-                <line x1="4" y1="15" x2="20" y2="15" />
-                <line x1="10" y1="3" x2="8" y2="21" />
-                <line x1="16" y1="3" x2="14" y2="21" />
-            </svg>
-            Préfixes
-        </button>
-        <button class="nav-btn" data-tab="operations" onclick="switchTab('operations',this)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-            </svg>
-            Opérations
-        </button>
-        <button class="nav-btn" data-tab="gains" onclick="switchTab('gains',this)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                <polyline points="16 7 22 7 22 13" />
-            </svg>
-            Gains
-        </button>
-        <button class="nav-btn" data-tab="accounts" onclick="switchTab('accounts',this)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            Comptes
-        </button>
-        <a href="<?= base_url('/') ?>" class="nav-btn" style="margin-left:auto">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Retour
-        </a>
-    </div>
+    <?= view('operator/partials/mobile_nav') ?>
 
     <div class="app-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-brand">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="brand-logo">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="5" y="2" width="14" height="20" rx="2" />
-                            <line x1="12" y1="18" x2="12.01" y2="18" />
-                        </svg>
-                    </div>
-                    <span class="brand-text">Nova<span class="accent">Money</span></span>
-                </div>
-                <div class="brand-sub">Espace Opérateur</div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <button class="nav-btn active" data-tab="prefixes" onclick="switchTab('prefixes',this)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="4" y1="9" x2="20" y2="9" />
-                        <line x1="4" y1="15" x2="20" y2="15" />
-                        <line x1="10" y1="3" x2="8" y2="21" />
-                        <line x1="16" y1="3" x2="14" y2="21" />
-                    </svg>
-                    Préfixes
-                </button>
-                <button class="nav-btn" data-tab="operations" onclick="switchTab('operations',this)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-                    </svg>
-                    Opérations
-                </button>
-                <button class="nav-btn" data-tab="gains" onclick="switchTab('gains',this)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                        <polyline points="16 7 22 7 22 13" />
-                    </svg>
-                    Gains
-                </button>
-                <button class="nav-btn" data-tab="accounts" onclick="switchTab('accounts',this)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    Comptes
-                </button>
-            </nav>
-
-            <div class="sidebar-footer">
-                <a href="<?= base_url('/') ?>" class="nav-btn" style="text-decoration:none">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                        <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    Retour à l'accueil
-                </a>
-            </div>
-        </aside>
+        <?= view('operator/partials/sidebar') ?>
 
         <!-- Main -->
         <main class="main-content">
 
-            <!-- ═══════════════════════════════════════
-           TAB : PRÉFIXES
-      ════════════════════════════════════════ -->
-            <div id="tab-prefixes" class="tab-section">
-                <div class="page-title">Préfixes de l'opérateur</div>
-                <div class="page-subtitle">Numéros de téléphone valides pour cet opérateur.</div>
+            <?= view('operator/partials/tab_prefixes') ?>
 
-                <div class="row g-3 mb-4" id="prefix-grid">
-                    <!-- généré par JS -->
-                </div>
+            <?= view('operator/partials/tab_operations') ?>
 
-                <div class="nm-card p-4" style="max-width:320px">
-                    <div style="font-size:.875rem;font-weight:500;margin-bottom:.75rem">Ajouter un préfixe</div>
-                    <div class="d-flex gap-2">
-                        <input id="new-prefix-input" type="text" class="nm-input" placeholder="034" maxlength="3"
-                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)"
-                            onkeydown="if(event.key==='Enter')addPrefix()">
-                        <button class="btn-primary" onclick="addPrefix()">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="prefix-error" class="error-msg" style="display:none"></div>
-                </div>
-            </div>
+            <?= view('operator/partials/tab_gains', [
+                'gainRetrait' => $gainRetrait,
+                'gainTransfert' => $gainTransfert,
+                'gainTotal' => $gainTotal,
+                'clientsGains' => $clientsGains,
+            ]) ?>
 
-            <!-- ═══════════════════════════════════════
-           TAB : OPÉRATIONS
-      ════════════════════════════════════════ -->
-            <div id="tab-operations" class="tab-section" style="display:none">
-                <div class="page-title">Types d'opérations</div>
-                <div class="page-subtitle">Barèmes de frais par tranche de montant (modifiables).</div>
-
-                <div class="d-flex flex-column gap-3" id="operations-list">
-                    <!-- généré par JS -->
-                </div>
-            </div>
-
-            <!-- ═══════════════════════════════════════
-           TAB : GAINS
-      ════════════════════════════════════════ -->
-            <div id="tab-gains" class="tab-section" style="display:none">
-                <div class="page-title">Situation des gains</div>
-                <div class="page-subtitle">Revenus générés via les frais d'opérations.</div>
-
-                <?php
-                    // Fournies par DashboardController::afficherGainParOperateur()
-                    // (extraites de $answer = ['Depot' => .., 'Retrait' => .., 'Transfert' => .., 'total' => ..])
-                    $gainRetrait = $Retrait ?? 0;
-                    $gainTransfert = $Transfert ?? 0;
-                    $gainDepot = $Depot ?? 0;
-                    $gainTotal = $total ?? ($gainRetrait + $gainTransfert + $gainDepot);
-                ?>
-                <div class="row g-3 mb-4">
-                    <div class="col-12 col-sm-4">
-                        <div class="stat-card"
-                            style="background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2)">
-                            <div class="stat-label">Gains Retraits</div>
-                            <div class="stat-value" style="color:#F87171" id="gain-retrait"><?= number_format($gainRetrait, 0, ',', ' ') ?> Ar</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-4">
-                        <div class="stat-card"
-                            style="background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.2)">
-                            <div class="stat-label">Gains Transferts</div>
-                            <div class="stat-value" style="color:#60A5FA" id="gain-transfert"><?= number_format($gainTransfert, 0, ',', ' ') ?> Ar</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-4">
-                        <div class="stat-card"
-                            style="background:rgba(0,214,143,.05);border:1px solid rgba(0,214,143,.2)">
-                            <div class="stat-label">Total Gains</div>
-                            <div class="stat-value" style="color:#00D68F" id="gain-total"><?= number_format($gainTotal, 0, ',', ' ') ?> Ar</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="nm-card overflow-hidden">
-                    <div class="p-3 px-4"
-                        style="border-bottom:1px solid var(--nm-border);font-size:.875rem;font-weight:500">
-                        Détail par client
-                    </div>
-                    <table class="nm-table">
-                        <thead>
-                            <tr>
-                                <th>Client</th>
-                                <th class="right">Frais Retraits</th>
-                                <th class="right">Frais Transferts</th>
-                                <th class="right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gains-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ═══════════════════════════════════════
-           TAB : COMPTES
-      ════════════════════════════════════════ -->
-            <div id="tab-accounts" class="tab-section" style="display:none">
-                <div class="page-title">Comptes clients</div>
-                <div class="page-subtitle" id="accounts-subtitle">— comptes enregistrés.</div>
-
-                <div class="nm-card overflow-hidden">
-                    <table class="nm-table">
-                        <thead>
-                            <tr>
-                                <th>Client</th>
-                                <th class="right">Solde</th>
-                                <th class="right d-none d-sm-table-cell">Transactions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="accounts-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
+            <?= view('operator/partials/tab_accounts') ?>
 
         </main>
     </div><!-- /app-layout -->
 
-    <script>
-        window.operatorAccounts = <?= json_encode($comptes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
-        window.operatorGains = <?= json_encode([
-            'depot' => $gainDepot,
-            'retrait' => $gainRetrait,
-            'transfert' => $gainTransfert,
-            'total' => $gainTotal,
-        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
-    </script>
-    <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
-    <script src="<?= base_url('js/operateur.js') ?>"></script>
-
+    <?= view('operator/partials/scripts', [
+        'comptes' => $comptes ?? [],
+        'gainDepot' => $gainDepot,
+        'gainRetrait' => $gainRetrait,
+        'gainTransfert' => $gainTransfert,
+        'gainTotal' => $gainTotal,
+    ]) ?>
 
 </body>
 

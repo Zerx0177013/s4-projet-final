@@ -3,35 +3,17 @@
 namespace App\Controllers;
 
 use App\Models\Mouvement;
-use App\Models\TypeOperation;
 
 class DashboardController extends BaseController
 {
-
-   
-  
-
-    public function calculGainParOperateur(int $idOperateur, $dateMin = null, $dateMax = null): array
+    public function afficherGainParOperateur($dateMin = null, $dateMax = null): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $typeOperationModel = new TypeOperation();
-        $typeOperations = $typeOperationModel->findAll();
+        $idOperateur = session()->get('idOperateur');
 
-        $answer = [];
-
-        foreach ($typeOperations as $typeOperation) {
-            $answer[$typeOperation['libelle']] = $this->calculGainParTypeOperation(
-                $idOperateur,
-                $typeOperation['id'],
-                $dateMin,
-                $dateMax
-            );
+        if ($idOperateur === null) {
+            return redirect()->to('/operator');
         }
 
-        return $answer;
-    }
-    public function calculGain(int $idTypeOperation, int $idOperateur, $dateMin = null, $dateMax = null)
-
-    {
         $mouvementModel = new Mouvement();
         $answer = $mouvementModel->calculGainParOperateur($idOperateur, $dateMin, $dateMax);
         // $answer = ['Depot' => 0, 'Retrait' => 50, 'Transfert' => 200]
