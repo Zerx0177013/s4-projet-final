@@ -46,8 +46,8 @@ Details dans todo.md
 - [x] fonction getHistoriqueCompte($idUser) (Noah)
 
 ## Version 2
-- [x] Ajouter une colonne pourcentageCommission dans Operateur
-- [x] Ajouter une colonne montantCommission dans mouvement et Operateur
+- [x] Ajouter une colonne pourcentageCommission dans Operateur (Rohan)
+- [x] Ajouter une colonne montantCommission dans mouvement et Operateur (Rohan)
 - [x] Configuration des préfixes valable pour les autres opérateurs (ex: 032 et 031, …) Dans la V1 (Rohan)
 - [x] Configuration % en plus de commissions pour les transferts vers les autres opérateurs (Rohan)
   - [x] modifier les fonctions js psour l'aperçu des prix pour inclure la commission (updateFeePreview)
