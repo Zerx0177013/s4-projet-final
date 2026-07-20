@@ -216,6 +216,28 @@
                     </div>
                 </div>
 
+                <?php
+                    // Regroupement du détail par client à partir de $liste
+                    // (fournie par DashboardController::afficherGainParOperateur() via Mouvement::getMouvementDetails())
+                    $clientsGains = [];
+                    foreach (($liste ?? []) as $mouvement) {
+                        $clientId = $mouvement['idSender'] ?? $mouvement['idReceiver'] ?? null;
+                        if ($clientId === null) {
+                            continue;
+                        }
+
+                        if (!isset($clientsGains[$clientId])) {
+                            $clientsGains[$clientId] = ['retrait' => 0, 'transfert' => 0];
+                        }
+
+                        $frais = (float) ($mouvement['montantFrais'] ?? 0);
+                        if (($mouvement['typeLibelle'] ?? '') === 'Retrait') {
+                            $clientsGains[$clientId]['retrait'] += $frais;
+                        } elseif (($mouvement['typeLibelle'] ?? '') === 'Transfert') {
+                            $clientsGains[$clientId]['transfert'] += $frais;
+                        }
+                    }
+                ?>
                 <div class="nm-card overflow-hidden">
                     <div class="p-3 px-4"
                         style="border-bottom:1px solid var(--nm-border);font-size:.875rem;font-weight:500">
@@ -230,7 +252,25 @@
                                 <th class="right">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="gains-tbody"></tbody>
+                        <tbody id="gains-tbody">
+                            <?php if (empty($clientsGains)): ?>
+                            <tr>
+                                <td colspan="4" style="text-align:center;color:var(--nm-muted)">Aucune opération pour le moment.</td>
+                            </tr>
+                            <?php else: ?>
+                            <?php foreach ($clientsGains as $clientId => $g): ?>
+                            <?php $totalClient = $g['retrait'] + $g['transfert']; ?>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:500">Compte #<?= (int) $clientId ?></div>
+                                </td>
+                                <td class="td-right mono" style="color:#F87171"><?= number_format($g['retrait'], 0, ',', ' ') ?> Ar</td>
+                                <td class="td-right mono" style="color:#60A5FA"><?= number_format($g['transfert'], 0, ',', ' ') ?> Ar</td>
+                                <td class="td-right mono" style="color:#00D68F;font-weight:600"><?= number_format($totalClient, 0, ',', ' ') ?> Ar</td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
                     </table>
                 </div>
             </div>

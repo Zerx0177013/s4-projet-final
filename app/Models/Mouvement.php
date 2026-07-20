@@ -85,15 +85,16 @@ class Mouvement extends Model
     {
         $builder = $this->builder();
 
-        $builder->select('id, idSender, idReceiver, somme, montantFrais, dateMouvement')
-            ->where('idOperateur', $idOperateur);
+        $builder->select('Mouvement.id, Mouvement.idSender, Mouvement.idReceiver, Mouvement.somme, Mouvement.montantFrais, Mouvement.dateMouvement, Mouvement.idTypeOperation, TypeOperation.libelle as typeLibelle')
+            ->join('TypeOperation', 'TypeOperation.id = Mouvement.idTypeOperation')
+            ->where('Mouvement.idOperateur', $idOperateur);
 
         if ($dateMin !== null) {
-            $builder->where('dateMouvement >=', $dateMin);
+            $builder->where('Mouvement.dateMouvement >=', $dateMin);
         }
 
         if ($dateMax !== null) {
-            $builder->where('dateMouvement <=', $dateMax);
+            $builder->where('Mouvement.dateMouvement <=', $dateMax);
         }
 
         return $builder->get()->getResultArray();

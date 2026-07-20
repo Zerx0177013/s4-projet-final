@@ -111,32 +111,13 @@ function updateFee(opId, idx, val) {
 
 /* ─── Gains ─────────────────────────────────────────────────────────── */
 function renderGains() {
-    // Totaux réels, fournis par DashboardController::afficherGainParOperateur() via window.operatorGains
+    // Totaux et détail par client rendus côté serveur (voir operator/operator.php)
+    // à partir de window.operatorGains / $liste fournis par
+    // DashboardController::afficherGainParOperateur(). Rien à recalculer ici.
     document.getElementById('gain-retrait').textContent = fmtAr(operatorGains.retrait || 0);
     document.getElementById('gain-transfert').textContent = fmtAr(operatorGains.transfert || 0);
     document.getElementById('gain-total').textContent = fmtAr(operatorGains.total || 0);
-
-    // Détail par client : pas fourni par afficherGainParOperateur (agrégat par opérateur uniquement),
-    // on continue d'afficher la répartition à partir des données de démonstration.
-    const rows = clients.map(c => {
-        let r = 0, t = 0;
-        c.transactions.forEach(tx => {
-            if (tx.type === 'retrait') r += tx.fee;
-            if (tx.type === 'transfert') t += tx.fee;
-        });
-        return `<tr>
-        <td>
-            <div style="font-weight:500">${c.name}</div>
-            <div class="mono" style="font-size:.7rem;color:var(--nm-muted)">${fmtPhone(c.phone)}</div>
-        </td>
-        <td class="td-right mono" style="color:#F87171">${fmtAr(r)}</td>
-        <td class="td-right mono" style="color:#60A5FA">${fmtAr(t)}</td>
-        <td class="td-right mono" style="color:#00D68F;font-weight:600">${fmtAr(r + t)}</td>
-    </tr>`;
-    }).join('');
-    document.getElementById('gains-tbody').innerHTML = rows;
 }
-
 /* ─── Accounts ──────────────────────────────────────────────────────── */
 function renderAccounts() {
     const accounts = accountClients;
