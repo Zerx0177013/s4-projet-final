@@ -27,7 +27,10 @@
 - [ ] CRUD pour les types d'operations
 - [ ] CRUD pour ajouter des frais a certains types d'operations
 - [ ] fonction calculGain($typeOperation, $dateMin, $dateMax)
-- [ ] fonction ListAllAccounts() avec leur solde
+- [x] fonction ListAllAccounts() avec leur solde
+  - [x] fonction afficherComptes() pour donner les donnees a comptes -[ ] fonction
+  - [x] fonction getComptesAvecTransactions() pour donner les doneees
+  - [ ] brancher la routes dans Routes.php pour /operator
 
 ### Client
 
@@ -42,6 +45,7 @@
 - [ ] fonction getHistorique($idUser)
 
 ## Frontend
+
 - [x] Création de template avec Figma Make
 - [x] Création des 4 pages principales : index.html, client-dashboard.html, client-login.html, operator.html
 - [x] Création des 4 feuilles de style : index.css, client-dashboard.css, client-login.css, operator.css

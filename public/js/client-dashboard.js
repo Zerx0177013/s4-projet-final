@@ -243,7 +243,7 @@ function switchTab(id, btn) {
 /* ─── Logout ────────────────────────────────────────────────────────── */
 function logout() {
     sessionStorage.removeItem('nm_phone');
-    window.location.href = 'client-login.html';
+    window.location.href = window.clientLoginUrl || 'client-login.html';
 }
 
 /* ─── Init ──────────────────────────────────────────────────────────── */

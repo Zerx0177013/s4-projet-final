@@ -7,13 +7,30 @@ use App\Models\TypeOperation;
 
 class DashboardController extends BaseController
 {
-    public function dashboard(): string
-    {
-        return view('dashboard');
-    }
 
-    // Controller
-    public function afficherGainParOperateur(int $idOperateur, $dateMin = null, $dateMax = null)
+   
+  
+
+    public function calculGainParOperateur(int $idOperateur, $dateMin = null, $dateMax = null): array
+    {
+        $typeOperationModel = new TypeOperation();
+        $typeOperations = $typeOperationModel->findAll();
+
+        $answer = [];
+
+        foreach ($typeOperations as $typeOperation) {
+            $answer[$typeOperation['libelle']] = $this->calculGainParTypeOperation(
+                $idOperateur,
+                $typeOperation['id'],
+                $dateMin,
+                $dateMax
+            );
+        }
+
+        return $answer;
+    }
+    public function calculGain(int $idTypeOperation, int $idOperateur, $dateMin = null, $dateMax = null)
+
     {
         $mouvementModel = new Mouvement();
         $answer = $mouvementModel->calculGainParOperateur($idOperateur, $dateMin, $dateMax);
