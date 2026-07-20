@@ -72,7 +72,6 @@
       </div>
     </div>
 
-    <p class="footer-hint mt-5">Préfixes actifs : 033 · 034 · 037 · 038</p>
   </div>
   <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
 </body>
