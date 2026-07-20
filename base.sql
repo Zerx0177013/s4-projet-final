@@ -2,7 +2,9 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE Operateur (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL UNIQUE
+    nom TEXT NOT NULL UNIQUE,
+    pourcentageCommission REAL NOT NULL DEFAULT 0 CHECK (pourcentageCommission >= 0), 
+    montantCommission REAL NOT NULL DEFAULT 0 CHECK (montantCommission >= 0)
 );
 
 CREATE TABLE prefixOperateur (
@@ -60,6 +62,7 @@ CREATE TABLE Mouvement (
     idReceiver INTEGER,
     dateMouvement DATETIME NOT NULL DEFAULT(datetime('now')),
     idOperateur INTEGER NOT NULL,
+    montantCommission REAL DEFAULT NULL,
     FOREIGN KEY (idTypeOperation) REFERENCES TypeOperation (id),
     FOREIGN KEY (idSender) REFERENCES compte (id),
     FOREIGN KEY (idReceiver) REFERENCES compte (id),
@@ -124,10 +127,6 @@ INSERT INTO compte (number, idStatus, idOperateur, solde) VALUES
 
 -- 8. Mouvements (historique) : dépôt, retrait, transfert
 -- idOperateur = l'opérateur qui gère/prélève l'opération (celui du compte concerné)
-INSERT INTO Mouvement (somme, montantFrais, idTypeOperation, idSender, idReceiver, dateMouvement, idOperateur) VALUES
-    (20000, 0,  1, NULL, 1, '2026-07-01 09:00:00', 1),  -- dépôt de 20000 sur compte 1 (Telma)
-    (5000,  50, 2, 1,    NULL, '2026-07-02 10:15:00', 1),  -- retrait de 5000 sur compte 1 (Telma) -> frais 50
-    (10000, 200, 3, 1,   2, '2026-07-03 14:30:00', 1);     -- transfert de 10000 entre compte 1 et 2, tous deux Telma -> frais 200
 CREATE INDEX idx_mouvement_sender ON Mouvement (idSender);
 
 CREATE INDEX idx_mouvement_receiver ON Mouvement (idReceiver);
