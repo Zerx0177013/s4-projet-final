@@ -98,4 +98,61 @@ class Mouvement extends Model
 
         return $builder->get()->getResultArray();
     }
+
+    /**
+     * Historique complet des mouvements d'un compte (émetteur ou destinataire),
+     * du plus récent au plus ancien, avec le libellé du type d'opération, le
+     * numéro de la contrepartie éventuelle, et le solde du compte immédiatement
+     * après chaque mouvement (reconstitué à partir du solde actuel).
+     */
+    public function getHistoriqueCompte(int $idCompte, float $soldeActuel): array
+    {
+        $rows = $this->select(
+                'Mouvement.id, Mouvement.somme, Mouvement.montantFrais, Mouvement.dateMouvement, ' .
+                'Mouvement.idSender, Mouvement.idReceiver, TypeOperation.libelle AS typeLibelle, ' .
+                'sender.number AS senderNumber, receiver.number AS receiverNumber'
+            )
+            ->join('TypeOperation', 'TypeOperation.id = Mouvement.idTypeOperation')
+            ->join('compte AS sender', 'sender.id = Mouvement.idSender', 'left')
+            ->join('compte AS receiver', 'receiver.id = Mouvement.idReceiver', 'left')
+            ->groupStart()
+                ->where('Mouvement.idSender', $idCompte)
+                ->orWhere('Mouvement.idReceiver', $idCompte)
+            ->groupEnd()
+            ->orderBy('Mouvement.dateMouvement', 'DESC')
+            ->orderBy('Mouvement.id', 'DESC')
+            ->findAll();
+
+        $running = $soldeActuel;
+        $history = [];
+
+        foreach ($rows as $row) {
+            $isSender   = (int) $row['idSender'] === $idCompte;
+            $type       = strtolower($row['typeLibelle']);
+            $amount     = (float) $row['somme'];
+            $fee        = (float) $row['montantFrais'];
+
+            $entry = [
+                'type'          => $type,
+                'amount'        => $amount,
+                'fee'           => $fee,
+                'date'          => $row['dateMouvement'],
+                'to'            => $type === 'transfert' && $isSender ? $row['receiverNumber'] : null,
+                'from'          => $type === 'transfert' && ! $isSender ? $row['senderNumber'] : null,
+                'balance_after' => $running,
+            ];
+            $history[] = $entry;
+
+            // Reconstitue le solde juste avant ce mouvement pour l'entrée suivante.
+            if ($type === 'depot') {
+                $running -= $amount;
+            } elseif ($type === 'retrait') {
+                $running += $amount + $fee;
+            } elseif ($type === 'transfert') {
+                $running += $isSender ? ($amount + $fee) : -$amount;
+            }
+        }
+
+        return $history;
+    }
 }
