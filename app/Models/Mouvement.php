@@ -105,18 +105,19 @@ class Mouvement extends Model
 
     /**
      * Exécute un dépôt, un retrait ou un transfert pour un compte client :
-     * calcule les frais depuis le barème lié au type d'opération, vérifie le
-     * solde, met à jour le(s) compte(s) concerné(s) et enregistre le
-     * mouvement, tout cela dans une transaction. Toute la logique métier vit
-     * ici (dans le Modèle), le Contrôleur ne fait qu'appeler cette méthode.
+     * calcule les frais depuis le barème lié au type d'opération, applique la
+     * commission inter-opérateur si nécessaire, vérifie le solde, met à jour
+     * les comptes concernés et enregistre le mouvement dans une transaction.
      *
-     * @param bool $includeFee Si true pour un transfert, les frais sont déduits du montant envoyé
+     * Si $includeFee est true pour un transfert, le montant saisi inclut les
+     * frais de transfert; sinon, les frais s'ajoutent au montant envoyé.
+     *
      * @throws RuntimeException si l'opération ne peut pas être réalisée.
      */
     public function enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null, bool $includeFee = false): array
     {
         if (! in_array($type, self::TYPES, true)) {
-            throw new RuntimeException("Type d'opération invalide.");
+            throw new RuntimeException('Type d\'opération invalide.');
         }
 
         if ($amount < 100) {
@@ -131,27 +132,27 @@ class Mouvement extends Model
         }
 
         $trancheModel = new Tranche();
-        $fee          = $typeOperation['idBareme'] !== null
+        $fee = $typeOperation['idBareme'] !== null
             ? $trancheModel->findFeeForAmount((int) $typeOperation['idBareme'], $amount)
             : 0.0;
-        
-
 
         $compteModel = new Compte();
-        $target      = null;
         $operateurModel = new Operateur();
-        $commissionFee = 0.0; 
-        $OperatorTarget = null;
-        $amountToSend = $amount;
+        $target = null;
+        $commissionFee = 0.0;
+        $amountReceived = $amount;
+        $senderOperatorId = (int) $compte['idOperateur'];
 
         if ($type === 'transfert') {
+            if ($targetNumber === null || $targetNumber === '') {
+                throw new RuntimeException('Compte destinataire introuvable.');
+            }
+
             if ($targetNumber === $compte['number']) {
                 throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
             }
 
-            $target = $targetNumber !== null ? $compteModel->findByNumber($targetNumber) : null;
-            $OperatorSender = $compteModel->getOperateurIdByCompteId($compte['idOperateur']);
-            $OperatorTarget = $compteModel->getOperateurIdByCompteId($target['idOperateur']);
+            $target = $compteModel->findByNumber($targetNumber);
 
             if ($target === null) {
                 throw new RuntimeException('Compte destinataire introuvable.');
@@ -161,20 +162,26 @@ class Mouvement extends Model
                 throw new RuntimeException('Le compte destinataire est bloqué.');
             }
 
-            if($OperatorSender !== $OperatorTarget){
-                $pourcentage = $operateurModel->getPourcentageCommission($OperatorTarget);
-                $commissionFee = $amount * $pourcentage / 100;
-            // Si les frais sont inclus, le destinataire reçoit moins
             if ($includeFee) {
                 if ($fee >= $amount) {
                     throw new RuntimeException('Montant insuffisant pour couvrir les frais.');
                 }
-                $amountToSend = $amount - $fee;
+
+                $amountReceived = $amount - $fee;
+            }
+
+            $targetOperatorId = (int) $target['idOperateur'];
+            if ($senderOperatorId !== $targetOperatorId) {
+                $pourcentage = (float) $operateurModel->getPourcentageCommission($targetOperatorId);
+                $commissionFee = $amount * $pourcentage / 100;
             }
         }
 
-        // Calcul du coût total pour l'émetteur
-        $totalCost = $type === 'depot' ? 0 : ($includeFee && $type === 'transfert' ? $amount : $amount + $fee);
+        $totalCost = match ($type) {
+            'depot' => 0.0,
+            'retrait' => $amount + $fee,
+            'transfert' => ($includeFee ? $amount : $amount + $fee) + $commissionFee,
+        };
 
         if ($type !== 'depot' && (float) $compte['solde'] < $totalCost) {
             throw new RuntimeException('Solde insuffisant.');
@@ -183,46 +190,55 @@ class Mouvement extends Model
         $db = Database::connect();
         $db->transStart();
 
-        $idSender   = $type === 'depot' ? null : $compte['id'];
-        $idReceiver = $type === 'retrait' ? null : ($type === 'transfert' ? $target['id'] : $compte['id']);
+        try {
+            $idSender = $type === 'depot' ? null : $compte['id'];
+            $idReceiver = $type === 'retrait' ? null : ($type === 'transfert' ? $target['id'] : $compte['id']);
 
-        $this->insert([
-            'somme'           => $includeFee && $type === 'transfert' ? $amountToSend : $amount,
-            'montantFrais'    => $fee,
-            'idTypeOperation' => $typeOperation['id'],
-            'idSender'        => $idSender,
-            'idReceiver'      => $idReceiver,
-            'idOperateur'     => $compte['idOperateur'],
-            'montantCommission' => $commissionFee
-        ]);
+            $this->insert([
+                'somme'              => $amount,
+                'montantFrais'       => $fee,
+                'idTypeOperation'    => $typeOperation['id'],
+                'idSender'           => $idSender,
+                'idReceiver'         => $idReceiver,
+                'idOperateur'        => $senderOperatorId,
+                'montantCommission'  => $commissionFee,
+            ]);
 
-        $newBalance = match ($type) {
-            'depot'     => $compteModel->ajusterSolde($compte['id'], $amount),
-            'retrait'   => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
-            'transfert' => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee + $commissionFee)),
-        };
+            $newBalance = match ($type) {
+                'depot' => $compteModel->ajusterSolde($compte['id'], $amount),
+                'retrait' => $compteModel->ajusterSolde($compte['id'], -($amount + $fee)),
+                'transfert' => $compteModel->ajusterSolde($compte['id'], -$totalCost),
+            };
 
-        if ($type === 'transfert') {
-            $compteModel->ajusterSolde($target['id'], $amountToSend);
-            $operateurModel->AddToMontantCommission($OperatorTarget, $commissionFee);
-        };
+            if ($type === 'transfert') {
+                $compteModel->ajusterSolde($target['id'], $amountReceived);
 
-        $db->transComplete();
+                if ($commissionFee > 0) {
+                    $operateurModel->AddToMontantCommission((int) $target['idOperateur'], $commissionFee);
+                }
+            }
+
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
 
         if ($db->transStatus() === false) {
             throw new RuntimeException('Une erreur est survenue, veuillez réessayer.');
         }
 
         return [
-            'balance'     => $newBalance,
+            'balance' => $newBalance,
             'transaction' => [
-                'type'          => $type,
-                'amount'        => $amount,
-                'fee'           => $fee,
-                'date'          => date('d/m/Y H:i'),
-                'to'            => $type === 'transfert' ? $target['number'] : null,
+                'type' => $type,
+                'amount' => $amount,
+                'fee' => $fee,
+                'commission' => $commissionFee,
+                'date' => date('d/m/Y H:i'),
+                'to' => $type === 'transfert' ? $target['number'] : null,
                 'balance_after' => $newBalance,
-                'amountReceived' => $includeFee && $type === 'transfert' ? $amountToSend : null,
+                'amountReceived' => $type === 'transfert' ? $amountReceived : null,
             ],
         ];
     }
