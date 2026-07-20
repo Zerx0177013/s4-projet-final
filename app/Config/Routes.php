@@ -19,4 +19,7 @@ $routes->post('/operator/prefixes/ajouter', 'PrefixeController::ajouter');
 $routes->get('/operator/prefixes/supprimer/(:num)', 'PrefixeController::supprimer/$1');
 
 $routes->get('/client/login', 'ClientController::login');
+$routes->post('/client/login', 'ClientController::authenticate');
+$routes->get('/client/logout', 'ClientController::logout');
 $routes->get('/client/dashboard', 'ClientController::dashboard');
+$routes->post('/client/operation', 'ClientController::operate');

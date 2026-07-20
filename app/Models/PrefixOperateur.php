@@ -23,4 +23,15 @@ class PrefixOperateur extends Model
             ->orderBy('prefix', 'ASC')
             ->findAll();
     }
+    /**
+     * Retourne l'id de l'opérateur correspondant à un préfixe, ou null si
+     * ce préfixe n'est rattaché à aucun opérateur.
+     */
+    public function findOperateurIdByPrefix(string $prefix): ?int
+    {
+        $row = $this->where('prefix', $prefix)->first();
+
+        return $row['idOperateur'] ?? null;
+    }
+
 }
