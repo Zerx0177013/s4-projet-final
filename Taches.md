@@ -42,14 +42,10 @@
 - [ ] fonction getHistorique($idUser)
 
 ## Frontend
-
-    [x] Création de template avec Figma Make
-
-    [x] Création des 4 pages principales : index.html, client-dashboard.html, client-login.html, operator.html
-
-    [x] Création des 4 feuilles de style : index.css, client-dashboard.css, client-login.css, operator.css
-
-    [x] Création des 4 fichiers JS : index.js, client-dashboard.js, client-login.js, operator.js
+- [x] Création de template avec Figma Make
+- [x] Création des 4 pages principales : index.html, client-dashboard.html, client-login.html, operator.html
+- [x] Création des 4 feuilles de style : index.css, client-dashboard.css, client-login.css, operator.css
+- [x] Création des 4 fichiers JS : index.js, client-dashboard.js, client-login.js, operator.js
 
 ## Frontend (JS) — Fonctions expliquées (Logique statique)
 
