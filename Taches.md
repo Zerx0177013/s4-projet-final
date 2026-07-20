@@ -63,7 +63,7 @@ Details dans todo.md
 - [x] Situation des montants à envoyer à chaque opérateur dans la V1 (Rohan)
   - [x] fonction qui somme toutes les commissions d'un operateur/getCommission directement
 
-### Client
+### Client (Noah)
 
 - [x] Option "Inclure les frais de retrait" dans le transfert simple (Noah)
   - [x] Case à cocher qui ajoute les frais de retrait au total
