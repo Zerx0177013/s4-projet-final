@@ -22,27 +22,25 @@
 
 ### Operateur
 
-- [ ] CRUD pour les prefixes
+- [x] CRUD pour les prefixes
 - [ ] page de modifications des tarifs pour les frais
 - [ ] CRUD pour les types d'operations
 - [ ] CRUD pour ajouter des frais a certains types d'operations
-- [ ] fonction calculGain($typeOperation, $dateMin, $dateMax)
+- [x] fonction calculGainParOperateur($idOperateur, $dateMin, $dateMax)
 - [x] fonction ListAllAccounts() avec leur solde
   - [x] fonction afficherComptes() pour donner les donnees a comptes -[ ] fonction
   - [x] fonction getComptesAvecTransactions() pour donner les doneees
-  - [ ] brancher la routes dans Routes.php pour /operator
+  - [x] brancher la routes dans Routes.php pour /operator
 
 ### Client
 
-- [ ] fonction login($numero)
-  - [ ] si le numero existe pas:
-    - [ ] creation d'un compte avec solde = 0
-  - [ ] ajax pour voir si le numero est valide ou pas (par rapport au prefix)
-- [ ] fonction viewPersonalInfo($id) pour voir les informations du compte
-- [ ] fonction deposer($idUser, $montant)
-- [ ] fonction retirer($idUser, $montant)
-- [ ] fonction transferer($idUser,$idReceiver,$montant)
-- [ ] fonction getHistorique($idUser)
+- [x] fonction login($numero)
+  - [x] si le numero existe pas:
+    - [x] creation d'un compte avec solde = 0
+  - [x] ajax pour voir si le numero est valide ou pas (par rapport au prefix)
+- [x] fonction getSolde($id) pour voir les informations du compte
+- [x] fonction enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null)
+- [x] fonction getHistoriqueCompte($idUser)
 
 ## Frontend
 
