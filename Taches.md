@@ -6,14 +6,15 @@
 # General
 
 - [x] creation du repository public
-- [ ] creation de l'environnement
-- [ ] installation de la base SQLite
+- [x] creation de l'environnement
+- [x] installation de la base SQLite
 
 # Base
 
 - [x] conception de la base
-- [ ] creation de la base
-- [ ] creation des tables
+- [x] creation de la base
+- [x] creation des tables
+- [x] creation des donnees de test
 
 # Backend
 
@@ -43,9 +44,18 @@
 # Frontend
 
 - [x] creation de template avec figma make
-- [x] creation des 4 pages principales -[x] index.html  
-       -[x] client-dashboard -[x] client-login -[x] operator.html
-- creation des 4 pages pour les css -[x] index.css  
-  -[x] client-dashboard.css -[x] client-login.css -[x] operator.css
-- [x] creation des 4 pages js pour les controle cote front : -[x] index.js  
-       -[x] client-dashboard.js -[x] client-login.js -[x] operator.js
+- [x] creation des 4 pages principales 
+  - [x] index.html  
+  - [x] client-dashboard 
+  - [x] client-login 
+  - [x] operator.html
+- [x] creation des 4 pages pour les css
+  - [x] index.css  
+  - [x] client-dashboard.css 
+  - [x] client-login.css 
+  - [x] operator.css
+- [x] creation des 4 pages js pour les controle cote front : 
+  - [x] index.js  
+  - [x] client-dashboard.js 
+  - [x] client-login.js 
+  - [x] operator.js
