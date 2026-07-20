@@ -3,13 +3,13 @@
 - Rohan ETU003918
 - Noah ETU004351
 
-# General
+# General (Rohan)
 
 - [x] creation du repository public
 - [x] creation de l'environnement
 - [x] installation de la base SQLite
 
-# Base
+# Base (Rohan)
 
 - [x] conception de la base
 - [x] creation de la base
@@ -22,29 +22,29 @@
 
 ### Operateur
 
-- [x] CRUD pour les prefixes
+- [x] CRUD pour les prefixes (Rohan)
 - [ ] page de modifications des tarifs pour les frais
 - [ ] CRUD pour les types d'operations
 - [ ] CRUD pour ajouter des frais a certains types d'operations
-- [x] fonction calculGainParOperateur($idOperateur, $dateMin, $dateMax)
-- [x] fonction ListAllAccounts() avec leur solde
+- [x] fonction calculGainParOperateur($idOperateur, $dateMin, $dateMax) (Rohan)
+- [x] fonction ListAllAccounts() avec leur solde (Noah)
   - [x] fonction afficherComptes() pour donner les donnees a comptes -[ ] fonction
   - [x] fonction getComptesAvecTransactions() pour donner les doneees
   - [x] brancher la routes dans Routes.php pour /operator
 
 ### Client
 
-- [x] fonction login($numero)
+- [x] fonction login($numero) (Noah)
   - [x] si le numero existe pas:
     - [x] creation d'un compte avec solde = 0
   - [x] ajax pour voir si le numero est valide ou pas (par rapport au prefix)
-- [x] fonction getSolde($id) pour voir les informations du compte
+- [x] fonction getSolde($id) pour voir les informations du compte (Noah)
 - [x] fonction enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null)
-- [x] fonction getHistoriqueCompte($idUser)
+- [x] fonction getHistoriqueCompte($idUser) (Noah)
 
 ## Frontend
 
-- [x] Création de template avec Figma Make
+- [x] Création de template avec Figma Make (Noah)
 - [x] Création des 4 pages principales : index.html, client-dashboard.html, client-login.html, operator.html
 - [x] Création des 4 feuilles de style : index.css, client-dashboard.css, client-login.css, operator.css
 - [x] Création des 4 fichiers JS : index.js, client-dashboard.js, client-login.js, operator.js
