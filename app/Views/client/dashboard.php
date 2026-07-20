@@ -182,23 +182,94 @@
               <div class="op-card-sub">Envoyez de l'argent</div>
             </div>
           </div>
-          <div class="mb-3">
-            <label class="nm-label" for="transfert-target">Numéro destinataire</label>
-            <input id="transfert-target" type="tel" class="nm-input mono-font" placeholder="0330000000" maxlength="10"
-              oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);clearFeedback()">
+
+          <!-- Mode selection tabs -->
+          <div class="transfert-mode-tabs mb-3">
+            <button class="mode-tab active" data-mode="simple" onclick="switchTransfertMode('simple')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+              </svg>
+              Simple
+            </button>
+            <button class="mode-tab" data-mode="multiple" onclick="switchTransfertMode('multiple')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Multiple
+            </button>
           </div>
-          <div class="mb-3">
-            <label class="nm-label" for="transfert-amount">Montant (Ar)</label>
-            <input id="transfert-amount" type="number" class="nm-input mono-font" placeholder="ex : 50 000" min="100"
-              oninput="updateFeePreview('transfert');clearFeedback()">
-          </div>
-          <div id="transfert-preview" style="display:none" class="fee-preview mb-3">
-            <div class="fee-row"><span>Montant</span><span class="mono-font" id="transfert-p-amount">—</span></div>
-            <div class="fee-row"><span>Frais</span><span class="mono-font" id="transfert-p-fee">—</span></div>
-            <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="transfert-p-total">—</span>
+
+          <!-- Simple mode -->
+          <div id="transfert-simple" class="transfert-mode-content">
+            <div class="mb-3">
+              <label class="nm-label" for="transfert-target">Numéro destinataire</label>
+              <input id="transfert-target" type="tel" class="nm-input mono-font" placeholder="0330000000" maxlength="10"
+                oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);clearFeedback()">
             </div>
+            <div class="mb-3">
+              <label class="nm-label" for="transfert-amount">Montant (Ar)</label>
+              <input id="transfert-amount" type="number" class="nm-input mono-font" placeholder="ex : 50 000" min="100"
+                oninput="updateFeePreview('transfert');clearFeedback()">
+            </div>
+            <div class="mb-3">
+              <label class="nm-checkbox">
+                <input type="checkbox" id="transfert-include-fee" onchange="updateFeePreview('transfert')">
+                <span>Inclure les frais dans le montant envoyé</span>
+                <small>Le destinataire recevra le montant moins les frais</small>
+              </label>
+            </div>
+            <div id="transfert-preview" style="display:none" class="fee-preview mb-3">
+              <div class="fee-row"><span>Montant envoyé</span><span class="mono-font" id="transfert-p-amount">—</span></div>
+              <div class="fee-row"><span>Frais</span><span class="mono-font" id="transfert-p-fee">—</span></div>
+              <div class="fee-row"><span id="transfert-p-received-label">Destinataire reçoit</span><span class="mono-font" id="transfert-p-received">—</span></div>
+              <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="transfert-p-total">—</span></div>
+            </div>
+            <button class="btn-confirm" onclick="doOperation('transfert')">Confirmer le transfert</button>
           </div>
-          <button class="btn-confirm" onclick="doOperation('transfert')">Confirmer le transfert</button>
+
+          <!-- Multiple mode -->
+          <div id="transfert-multiple" class="transfert-mode-content" style="display:none">
+            <div class="mb-3">
+              <label class="nm-label">Destinataires</label>
+              <div id="recipients-list">
+                <div class="recipient-row">
+                  <input type="tel" class="nm-input mono-font recipient-phone" placeholder="0330000000" maxlength="10"
+                    oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);updateMultipleFeePreview();clearFeedback()">
+                  <button class="btn-remove-recipient" onclick="removeRecipient(this)" style="visibility:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button class="btn-add-recipient" onclick="addRecipient()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Ajouter un destinataire
+              </button>
+            </div>
+            <div class="mb-3">
+              <label class="nm-label" for="transfert-multiple-amount">Montant total à répartir (Ar)</label>
+              <input id="transfert-multiple-amount" type="number" class="nm-input mono-font" placeholder="ex : 100 000" min="100"
+                oninput="updateMultipleFeePreview();clearFeedback()">
+            </div>
+            <div id="transfert-multiple-preview" style="display:none" class="fee-preview mb-3">
+              <div class="fee-row"><span>Montant total</span><span class="mono-font" id="transfert-m-amount">—</span></div>
+              <div class="fee-row"><span>Nombre de destinataires</span><span class="mono-font" id="transfert-m-count">—</span></div>
+              <div class="fee-row"><span>Par destinataire</span><span class="mono-font" id="transfert-m-per-person">—</span></div>
+              <div class="fee-row"><span>Frais par transfert</span><span class="mono-font" id="transfert-m-fee">—</span></div>
+              <div class="fee-row"><span>Frais total</span><span class="mono-font" id="transfert-m-total-fee">—</span></div>
+              <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="transfert-m-total">—</span></div>
+            </div>
+            <button class="btn-confirm" onclick="doOperation('transfert-multiple')">Confirmer les transferts</button>
+          </div>
         </div>
       </div>
 
