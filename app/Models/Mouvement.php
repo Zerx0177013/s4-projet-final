@@ -12,7 +12,7 @@ class Mouvement extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['somme', 'montantFrais', 'idTypeOperation', 'idSender', 'idReceiver', 'dateMouvement'];
+    protected $allowedFields    = ['idOperateur','somme', 'montantFrais', 'idTypeOperation', 'idSender', 'idReceiver', 'dateMouvement'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
