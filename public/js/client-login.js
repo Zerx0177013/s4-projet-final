@@ -1,5 +1,6 @@
-/* Prefixes accepted — doit correspondre à la config opérateur */
-const PREFIXES = ['033', '034', '037', '038'];
+/* Préfixes acceptés — fournis dynamiquement par le serveur (table
+   prefixOperateur), aucune donnée statique côté client. */
+const PREFIXES = window.clientPrefixes || [];
 
 /* Render prefix tags */
 document.getElementById('prefix-tags').innerHTML =
@@ -14,15 +15,17 @@ function clearError() {
 }
 
 function handleLogin(e) {
-    e.preventDefault();
     const phone = document.getElementById('phone-input').value.replace(/\s/g, '');
     if (phone.length !== 10 || !/^\d+$/.test(phone)) {
-        showError('Numéro invalide (10 chiffres requis).'); return;
+        e.preventDefault();
+        showError('Numéro invalide (10 chiffres requis).'); return false;
     }
     if (!PREFIXES.includes(phone.slice(0, 3))) {
-        showError(`Le préfixe ${phone.slice(0, 3)} n'est pas pris en charge par cet opérateur.`); return;
+        e.preventDefault();
+        showError(`Le préfixe ${phone.slice(0, 3)} n'est pas pris en charge par cet opérateur.`); return false;
     }
-    /* Stocker le numéro en session et rediriger */
-    sessionStorage.setItem('nm_phone', phone);
-    window.location.href = window.clientDashboardUrl || 'client-dashboard.html';
+    /* Numéro valide côté client : le formulaire est soumis normalement au
+       serveur, qui crée le compte s'il n'existe pas encore (Compte::loginOuCreer),
+       ou connecte directement le client si le numéro est déjà enregistré. */
+    return true;
 }

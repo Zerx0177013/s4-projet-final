@@ -1,61 +1,26 @@
-/* ─── Config ────────────────────────────────────────────────────────── */
-const PREFIXES = ['033', '034', '037', '038'];
-
-const SLABS_RETRAIT = [
-    { min: 100, max: 1000, fee: 50 },
-    { min: 1001, max: 5000, fee: 50 },
-    { min: 5001, max: 10000, fee: 100 },
-    { min: 10001, max: 25000, fee: 200 },
-    { min: 25001, max: 50000, fee: 400 },
-    { min: 50001, max: 100000, fee: 800 },
-    { min: 100001, max: 250000, fee: 1500 },
-    { min: 250001, max: 500000, fee: 1500 },
-    { min: 500001, max: 1000000, fee: 2500 },
-    { min: 1000001, max: 2000000, fee: 3000 },
-];
-const SLABS_TRANSFERT = SLABS_RETRAIT.map(s => ({ ...s, fee: Math.round(s.fee * .7) }));
+/* ─── Config & données (fournies par le serveur, aucune donnée statique) ── */
+const PREFIXES = window.clientPrefixes || [];
+const SLABS_RETRAIT = (window.clientFeeSlabs && window.clientFeeSlabs.retrait) || [];
+const SLABS_TRANSFERT = (window.clientFeeSlabs && window.clientFeeSlabs.transfert) || [];
 
 /* ─── State ─────────────────────────────────────────────────────────── */
-/* En production, charger depuis le serveur via AJAX ou variables PHP */
-const DEMO_CLIENTS = {
-    '0331234567': {
-        name: 'Rakoto Jean', balance: 450000, transactions: [
-            { type: 'depot', amount: 500000, fee: 0, date: '18/07/2026 09:14', to: null, balance_after: 500000 },
-            { type: 'retrait', amount: 50000, fee: 800, date: '19/07/2026 14:22', to: null, balance_after: 449200 },
-        ]
-    },
-    '0371234567': {
-        name: 'Rasoa Marie', balance: 125000, transactions: [
-            { type: 'depot', amount: 200000, fee: 0, date: '15/07/2026 10:00', to: null, balance_after: 200000 },
-        ]
-    },
-    '0332345678': {
-        name: 'Rabe Pierre', balance: 78500, transactions: [
-            { type: 'depot', amount: 100000, fee: 0, date: '16/07/2026 08:45', to: null, balance_after: 100000 },
-            { type: 'transfert', amount: 20000, fee: 140, date: '18/07/2026 15:10', to: '0371234567', balance_after: 79860 },
-        ]
-    },
+const phone = (window.clientAccount && window.clientAccount.phone) || '';
+const client = {
+    balance: (window.clientAccount && window.clientAccount.balance) || 0,
+    transactions: Array.isArray(window.clientTransactions) ? window.clientTransactions : [],
 };
-
-let phone = sessionStorage.getItem('nm_phone') || '0331234567'; /* fallback démo */
-let client;
-
-function initClient() {
-    if (DEMO_CLIENTS[phone]) {
-        client = JSON.parse(JSON.stringify(DEMO_CLIENTS[phone]));
-    } else {
-        client = { name: 'Client ' + phone, balance: 0, transactions: [] };
-    }
-}
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */
 function fmtAr(n) { return new Intl.NumberFormat('fr-FR').format(n) + ' Ar' }
-function fmtPhone(p) { return p.length === 10 ? `${p.slice(0, 3)} ${p.slice(3, 5)} ${p.slice(5, 8)} ${p.slice(8)}` : p }
-function nowStr() { return new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) }
+function fmtPhone(p) { return p && p.length === 10 ? `${p.slice(0, 3)} ${p.slice(3, 5)} ${p.slice(5, 8)} ${p.slice(8)}` : p }
+function fmtDate(d) {
+    const date = new Date(String(d).replace(' ', 'T'));
+    return isNaN(date) ? d : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
 function getFee(slabs, amt) {
     const s = slabs.find(s => amt >= s.min && amt <= s.max);
     if (s) return s.fee;
-    if (amt > slabs[slabs.length - 1].max) return slabs[slabs.length - 1].fee;
+    if (slabs.length && amt > slabs[slabs.length - 1].max) return slabs[slabs.length - 1].fee;
     return 0;
 }
 
@@ -68,7 +33,7 @@ const TX_BG = { depot: 'rgba(52,211,153,.1)', retrait: 'rgba(248,113,113,.1)', t
 
 /* ─── UI updates ────────────────────────────────────────────────────── */
 function updateHeader() {
-    document.getElementById('header-name').textContent = client.name;
+    document.getElementById('header-name').textContent = 'Client ' + phone;
     document.getElementById('header-phone').textContent = fmtPhone(phone);
     document.getElementById('balance-display').textContent = fmtAr(client.balance);
 }
@@ -88,6 +53,7 @@ function renderMiniStats() {
 
 function txItemHtml(tx, mini = false) {
     const cfg = TX_CFG[tx.type];
+    const counterpart = tx.to || tx.from;
     return `<div class="${mini ? 'tx-item' : 'history-item'}">
       ${mini ? `
         <div class="tx-icon" style="background:${TX_BG[tx.type]}">
@@ -95,7 +61,7 @@ function txItemHtml(tx, mini = false) {
         </div>
         <div class="tx-info">
           <div class="tx-type" style="color:${cfg.color}">${cfg.label}</div>
-          <div class="tx-date">${tx.date}</div>
+          <div class="tx-date">${fmtDate(tx.date)}</div>
         </div>
         <div>
           <div class="tx-amount" style="color:var(--nm-text)">${fmtAr(tx.amount)}</div>
@@ -110,12 +76,12 @@ function txItemHtml(tx, mini = false) {
           <div class="hi-amount" style="color:var(--nm-text)">${fmtAr(tx.amount)}</div>
         </div>
         <div class="hi-bottom">
-          <span class="hi-date">${tx.date}</span>
+          <span class="hi-date">${fmtDate(tx.date)}</span>
           <span class="hi-balance">Solde : ${fmtAr(tx.balance_after)}</span>
         </div>
         <div class="hi-extra">
           ${tx.fee > 0 ? `Frais : ${fmtAr(tx.fee)}` : ''}
-          ${tx.to ? `→ ${fmtPhone(tx.to)}` : ''}
+          ${counterpart ? `${tx.to ? '→' : '←'} ${fmtPhone(counterpart)}` : ''}
         </div>`
         }
     </div>`;
@@ -175,20 +141,12 @@ function showFeedback(ok, msg) {
 }
 function clearFeedback() { document.getElementById('feedback').style.display = 'none' }
 
-/* ─── Operations ────────────────────────────────────────────────────── */
-function doOperation(type) {
+/* ─── Operations (persistées côté serveur, via ClientController::operate) ── */
+async function doOperation(type) {
     clearFeedback();
     const amtInput = document.getElementById(type + '-amount');
     const amt = parseInt(amtInput.value);
     if (!amt || amt < 100) { showFeedback(false, 'Montant minimum : 100 Ar.'); return }
-
-    let fee = 0;
-    if (type === 'retrait') fee = getFee(SLABS_RETRAIT, amt);
-    if (type === 'transfert') fee = getFee(SLABS_TRANSFERT, amt);
-
-    if (type !== 'depot' && client.balance < amt + fee) {
-        showFeedback(false, `Solde insuffisant. Disponible : ${fmtAr(client.balance)}.`); return;
-    }
 
     let target = '';
     if (type === 'transfert') {
@@ -198,16 +156,30 @@ function doOperation(type) {
         if (target === phone) { showFeedback(false, 'Impossible de vous envoyer à vous-même.'); return }
     }
 
-    /* Mise à jour du solde */
-    if (type === 'depot') client.balance += amt;
-    else client.balance -= (amt + fee);
+    const payload = { type, amount: amt };
+    if (type === 'transfert') payload.target = target;
 
-    /* Ajout de la transaction */
-    client.transactions.unshift({
-        type, amount: amt, fee, date: nowStr(),
-        to: target || null,
-        balance_after: client.balance,
-    });
+    let result;
+    try {
+        const res = await fetch(window.clientOperationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        result = await res.json();
+    } catch (err) {
+        showFeedback(false, 'Erreur réseau. Veuillez réessayer.');
+        return;
+    }
+
+    if (!result.success) {
+        showFeedback(false, result.message || 'Opération refusée.');
+        return;
+    }
+
+    /* Mise à jour de l'état local à partir de la réponse serveur (autorité) */
+    client.balance = result.balance;
+    client.transactions.unshift(result.transaction);
 
     /* Reset form */
     amtInput.value = '';
@@ -216,6 +188,7 @@ function doOperation(type) {
         (document.getElementById(type + '-preview').style.display = 'none');
 
     /* Feedback */
+    const fee = result.transaction.fee;
     const msgs = {
         depot: `Dépôt de ${fmtAr(amt)} effectué avec succès.`,
         retrait: `Retrait de ${fmtAr(amt)} effectué. Frais : ${fmtAr(fee)}.`,
@@ -242,12 +215,10 @@ function switchTab(id, btn) {
 
 /* ─── Logout ────────────────────────────────────────────────────────── */
 function logout() {
-    sessionStorage.removeItem('nm_phone');
-    window.location.href = window.clientLoginUrl || 'client-login.html';
+    window.location.href = window.clientLogoutUrl || 'client-login.html';
 }
 
 /* ─── Init ──────────────────────────────────────────────────────────── */
-initClient();
 updateHeader();
 renderMiniStats();
 renderRecentTx();

@@ -15,4 +15,7 @@ $routes->get('/operator/dashboard', 'CompteController::afficherComptes');
 $routes->get('/operator/gains', 'DashboardController::afficherGainParOperateur');
 
 $routes->get('/client/login', 'ClientController::login');
+$routes->post('/client/login', 'ClientController::authenticate');
+$routes->get('/client/logout', 'ClientController::logout');
 $routes->get('/client/dashboard', 'ClientController::dashboard');
+$routes->post('/client/operation', 'ClientController::operate');

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use Config\Database;
+use RuntimeException;
 
 class Mouvement extends Model
 {
+    private const TYPES = ['depot', 'retrait', 'transfert'];
     protected $table            = 'Mouvement';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
@@ -98,6 +101,104 @@ class Mouvement extends Model
         }
 
         return $builder->get()->getResultArray();
+    }
+
+    /**
+     * Exécute un dépôt, un retrait ou un transfert pour un compte client :
+     * calcule les frais depuis le barème lié au type d'opération, vérifie le
+     * solde, met à jour le(s) compte(s) concerné(s) et enregistre le
+     * mouvement, tout cela dans une transaction. Toute la logique métier vit
+     * ici (dans le Modèle), le Contrôleur ne fait qu'appeler cette méthode.
+     *
+     * @throws RuntimeException si l'opération ne peut pas être réalisée.
+     */
+    public function enregistrerOperation(array $compte, string $type, float $amount, ?string $targetNumber = null): array
+    {
+        if (! in_array($type, self::TYPES, true)) {
+            throw new RuntimeException("Type d'opération invalide.");
+        }
+
+        if ($amount < 100) {
+            throw new RuntimeException('Montant minimum : 100 Ar.');
+        }
+
+        $typeOperationModel = new TypeOperation();
+        $typeOperation      = $typeOperationModel->findByLibelle(ucfirst($type));
+
+        if ($typeOperation === null) {
+            throw new RuntimeException("Type d'opération non configuré.");
+        }
+
+        $trancheModel = new Tranche();
+        $fee          = $typeOperation['idBareme'] !== null
+            ? $trancheModel->findFeeForAmount((int) $typeOperation['idBareme'], $amount)
+            : 0.0;
+
+        $compteModel = new Compte();
+        $target      = null;
+
+        if ($type === 'transfert') {
+            if ($targetNumber === $compte['number']) {
+                throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
+            }
+
+            $target = $targetNumber !== null ? $compteModel->findByNumber($targetNumber) : null;
+
+            if ($target === null) {
+                throw new RuntimeException('Compte destinataire introuvable.');
+            }
+
+            if ((int) $target['idStatus'] !== 1) {
+                throw new RuntimeException('Le compte destinataire est bloqué.');
+            }
+        }
+
+        if ($type !== 'depot' && (float) $compte['solde'] < $amount + $fee) {
+            throw new RuntimeException('Solde insuffisant.');
+        }
+
+        $db = Database::connect();
+        $db->transStart();
+
+        $idSender   = $type === 'depot' ? null : $compte['id'];
+        $idReceiver = $type === 'retrait' ? null : ($type === 'transfert' ? $target['id'] : $compte['id']);
+
+        $this->insert([
+            'somme'           => $amount,
+            'montantFrais'    => $fee,
+            'idTypeOperation' => $typeOperation['id'],
+            'idSender'        => $idSender,
+            'idReceiver'      => $idReceiver,
+            'idOperateur'     => $compte['idOperateur'],
+        ]);
+
+        $newBalance = match ($type) {
+            'depot'     => $compteModel->ajusterSolde($compte['id'], $amount),
+            'retrait'   => $compteModel->ajusterSolde($compte['id'], -($amount + $fee)),
+            'transfert' => $compteModel->ajusterSolde($compte['id'], -($amount + $fee)),
+        };
+
+        if ($type === 'transfert') {
+            $compteModel->ajusterSolde($target['id'], $amount);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            throw new RuntimeException('Une erreur est survenue, veuillez réessayer.');
+        }
+
+        return [
+            'balance'     => $newBalance,
+            'transaction' => [
+                'type'          => $type,
+                'amount'        => $amount,
+                'fee'           => $fee,
+                'date'          => date('d/m/Y H:i'),
+                'to'            => $type === 'transfert' ? $target['number'] : null,
+                'balance_after' => $newBalance,
+            ],
+        ];
     }
 
     /**

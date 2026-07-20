@@ -17,4 +17,13 @@ class TypeOperation extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
+    /**
+     * Recherche un type d'opération par libellé (ex. 'Depot', 'Retrait',
+     * 'Transfert').
+     */
+    public function findByLibelle(string $libelle): ?array
+    {
+        return $this->where('libelle', $libelle)->first();
+    }
+
 }

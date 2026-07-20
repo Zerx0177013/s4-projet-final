@@ -212,7 +212,18 @@
   </div><!-- /tab-content-area -->
 
   <script>
-    window.clientLoginUrl = <?= json_encode(base_url('client/login'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientLogoutUrl = <?= json_encode(base_url('client/logout'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientOperationUrl = <?= json_encode(base_url('client/operation'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientAccount = <?= json_encode([
+      'phone'   => $compte['number'],
+      'balance' => (float) $compte['solde'],
+    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientTransactions = <?= json_encode($history ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientFeeSlabs = <?= json_encode([
+      'retrait'   => array_map(fn ($s) => ['min' => (float) $s['min'], 'max' => (float) $s['max'], 'fee' => (float) $s['montant']], $feeSlabs['retrait'] ?? []),
+      'transfert' => array_map(fn ($s) => ['min' => (float) $s['min'], 'max' => (float) $s['max'], 'fee' => (float) $s['montant']], $feeSlabs['transfert'] ?? []),
+    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientPrefixes = <?= json_encode($prefixes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
   <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
   <script src="<?= base_url('js/client-dashboard.js') ?>"></script>

@@ -41,21 +41,22 @@
           </div>
         </div>
 
-        <form onsubmit="handleLogin(event)">
+        <?= form_open('client/login', ['onsubmit' => 'return handleLogin(event)']) ?>
           <div class="mb-3">
             <label class="nm-label" for="phone-input">Numéro de téléphone</label>
-            <input id="phone-input" type="tel" class="nm-input" placeholder="0330000000" maxlength="10"
-              autocomplete="tel" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);clearError()">
+            <input id="phone-input" name="phone" type="tel" class="nm-input" placeholder="0330000000" maxlength="10"
+              autocomplete="tel" value="<?= esc(old('phone')) ?>"
+              oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);clearError()">
           </div>
 
-          <div id="login-error" class="alert-nm mb-3" style="display:none">
+          <div id="login-error" class="alert-nm mb-3" style="<?= session()->getFlashdata('error') ? '' : 'display:none' ?>">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
-            <span id="login-error-msg"></span>
+            <span id="login-error-msg"><?= esc(session()->getFlashdata('error')) ?></span>
           </div>
 
           <button type="submit" class="btn-submit">
@@ -66,7 +67,7 @@
               <polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
-        </form>
+        <?= form_close() ?>
 
         <p class="login-hint">
           Aucune inscription requise.<br>
@@ -80,7 +81,7 @@
   </div>
 
   <script>
-    window.clientDashboardUrl = <?= json_encode(base_url('client/dashboard'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientPrefixes = <?= json_encode($prefixes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
   <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
   <script src="<?= base_url('js/client-login.js') ?>"></script>
