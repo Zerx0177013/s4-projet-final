@@ -78,4 +78,46 @@ Ce fichier détaille les fonctions backend déjà présentes dans le projet, pou
 - [ ] CRUD pour ajouter des frais à certains types d'opérations, si vous voulez isoler cette logique dans un flux dédié au lieu de passer uniquement par la gestion des tranches.
 
 # TODO V2
-## Contrôleur 
+
+Cette partie décrit tous les changements ajoutés après la V1.
+
+## Backend - commission et gains
+
+- [x] Ajout du suivi de `montantCommission` dans la table `Operateur`.
+- [x] Initialisation des commissions opérateur dans `base.sql`.
+- [x] Récupération du montant de commission via `Operateur::getMontantCommission(int $id)`.
+- [x] Intégration de la commission dans `CompteController::afficherComptes()`.
+- [x] Transmission de `commission` jusqu'à la vue `operator/operator.php`.
+- [x] Affichage d'une carte dédiée à la commission dans `tab_gains.php`.
+- [x] Injection de la commission dans `partials/scripts.php` pour l'interface opérateur.
+
+## Backend - transferts et cohérence métier
+
+- [x] Correction de `Mouvement::enregistrerOperation()` pour garder la logique de commission.
+- [x] Correction du calcul du coût total pour les transferts avec ou sans frais inclus.
+- [x] Correction de la récupération de l'opérateur destinataire pour calculer la commission inter-opérateur.
+- [x] Correction du cas où le compte destinataire n'existe pas encore en base.
+- [x] Création automatique du compte destinataire via `loginOuCreer()` si le numéro est valide.
+- [x] Ajout du champ `amountReceived` dans la transaction retournée pour les transferts.
+- [x] Ajout du champ `commission` dans la transaction retournée pour tracer la commission appliquée.
+- [x] Protection de l'opération via transaction SQL avec rollback en cas d'erreur.
+
+## Backend - opérateur
+
+- [x] Passage des gains opérateur de `CompteController` vers `operator/operator.php`.
+- [x] Mise à jour de `tab_gains.php` pour afficher 4 cartes: retraits, transferts, total et commission.
+- [x] Mise à jour de `operator.php` pour propager `gainCommission` au partiel des scripts.
+- [x] Nettoyage de `OperateurController.php` et des flux de session opérateur.
+
+## Backend - structure des données
+
+- [x] Ajout de la colonne `montantCommission` dans `Operateur`.
+- [x] Ajout de la commission opérateur dans les données de test.
+- [x] Conservation du modèle de barèmes et de tranches pour les frais classiques.
+
+## Backend - cohérence du flux client
+
+- [x] Validation du transfert client côté `ClientController::operate()`.
+- [x] Transmission de `includeFee` vers `Mouvement::enregistrerOperation()`.
+- [x] Gestion du transfert multiple via `enregistrerMultipleTransferts()`.
+- [x] Maintien du calcul des frais de tranche côté client et côté serveur.

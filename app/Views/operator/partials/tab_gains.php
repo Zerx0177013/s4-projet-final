@@ -11,6 +11,7 @@
 $gainRetrait ??= 0;
 $gainTransfert ??= 0;
 $gainTotal ??= 0;
+$gainCommission ??= 0;
 $clientsGains ??= [];
 ?>
             <!-- ═══════════════════════════════════════
@@ -21,25 +22,32 @@ $clientsGains ??= [];
                 <div class="page-subtitle">Revenus générés via les frais d'opérations.</div>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-12 col-sm-4">
+                    <div class="col-12 col-sm-3">
                         <div class="stat-card"
                             style="background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2)">
                             <div class="stat-label">Gains Retraits</div>
                             <div class="stat-value" style="color:#F87171" id="gain-retrait"><?= number_format($gainRetrait, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
-                    <div class="col-12 col-sm-4">
+                    <div class="col-12 col-sm-3">
                         <div class="stat-card"
                             style="background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.2)">
                             <div class="stat-label">Gains Transferts</div>
                             <div class="stat-value" style="color:#60A5FA" id="gain-transfert"><?= number_format($gainTransfert, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
-                    <div class="col-12 col-sm-4">
+                    <div class="col-12 col-sm-3">
                         <div class="stat-card"
                             style="background:rgba(0,214,143,.05);border:1px solid rgba(0,214,143,.2)">
                             <div class="stat-label">Total Gains</div>
                             <div class="stat-value" style="color:#00D68F" id="gain-total"><?= number_format($gainTotal, 0, ',', ' ') ?> Ar</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3">
+                        <div class="stat-card"
+                            style="background:rgba(255,193,7,.05);border:1px solid rgba(255,193,7,.2)">
+                            <div class="stat-label">Commission</div>
+                            <div class="stat-value" style="color:#FFC107" id="gain-commission"><?= number_format($gainCommission, 0, ',', ' ') ?> Ar</div>
                         </div>
                     </div>
                 </div>

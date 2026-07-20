@@ -8,6 +8,7 @@ $gainRetrait = $Retrait ?? 0;
 $gainTransfert = $Transfert ?? 0;
 $gainDepot = $Depot ?? 0;
 $gainTotal = $total ?? ($gainRetrait + $gainTransfert + $gainDepot);
+$gainCommission = $commission ?? 0;
 
 // Regroupement du détail par client à partir de $liste
 // (fournie par Mouvement::getMouvementDetails()), transmis explicitement
@@ -67,6 +68,7 @@ foreach (($liste ?? []) as $mouvement) {
                 'gainRetrait' => $gainRetrait,
                 'gainTransfert' => $gainTransfert,
                 'gainTotal' => $gainTotal,
+                'gainCommission' => $gainCommission,
                 'clientsGains' => $clientsGains,
             ]) ?>
 
@@ -80,6 +82,7 @@ foreach (($liste ?? []) as $mouvement) {
         'gainDepot' => $gainDepot,
         'gainRetrait' => $gainRetrait,
         'gainTransfert' => $gainTransfert,
+        'gainCommission' => $gainCommission,
         'gainTotal' => $gainTotal,
     ]) ?>
 

@@ -47,18 +47,18 @@ Details dans todo.md
 
 ## Version 2
 - [x] Ajouter une colonne pourcentageCommission dans Operateur
-- [ ] Ajouter une colonne montantCommission dans mouvement et Operateur
+- [x] Ajouter une colonne montantCommission dans mouvement et Operateur
 - [x] Configuration des préfixes valable pour les autres opérateurs (ex: 032 et 031, …) Dans la V1 (Rohan)
-- [ ] Configuration % en plus de commissions pour les transferts vers les autres opérateurs (Rohan)
-  - [ ] modifier les fonctions js psour l'aperçu des prix pour inclure la commission (updateFeePreview)
+- [x] Configuration % en plus de commissions pour les transferts vers les autres opérateurs (Rohan)
+  - [x] modifier les fonctions js psour l'aperçu des prix pour inclure la commission (updateFeePreview)
   - [x] recuperer la somme a envoyer
   - [x] prendre un certain % de cette somme si != operateur (dans la base)
   - [x] la commission va vers l'operateur receiver
   - [x] la somme + frais de retrait va vers le destinataire
-
+  - [x] ajouter dans la base la commission
 - [x] Sur la page “Situation gain via les différents frais” , séparer opérateur et autres opérateurs dans la V1 (Rohan)
-- [ ] Situation des montants à envoyer à chaque opérateur dans la V1 (Rohan)
-  - [ ] fonction qui somme toutes les commissions d'un operateur
+- [x] Situation des montants à envoyer à chaque opérateur dans la V1 (Rohan)
+  - [x] fonction qui somme toutes les commissions d'un operateur/getCommission directement 
 
 
 ## Frontend

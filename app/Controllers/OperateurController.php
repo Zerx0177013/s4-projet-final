@@ -42,7 +42,6 @@ class OperateurController extends BaseController
 
         return redirect()->to('/operator/dashboard');
     }
-
     /**
      * Réinitialise l'opérateur actif en session ("changer d'opérateur").
      */
