@@ -225,6 +225,7 @@
             <div id="transfert-preview" style="display:none" class="fee-preview mb-3">
               <div class="fee-row"><span>Montant envoyé</span><span class="mono-font" id="transfert-p-amount">—</span></div>
               <div class="fee-row"><span>Frais</span><span class="mono-font" id="transfert-p-fee">—</span></div>
+              <div class="fee-row" id="transfert-commission-row" style="display:none"><span>Commission inter-opérateur</span><span class="mono-font" id="transfert-p-commission">—</span></div>
               <div class="fee-row"><span id="transfert-p-received-label">Destinataire reçoit</span><span class="mono-font" id="transfert-p-received">—</span></div>
               <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="transfert-p-total">—</span></div>
             </div>
@@ -288,6 +289,7 @@
     window.clientAccount = <?= json_encode([
       'phone'   => $compte['number'],
       'balance' => (float) $compte['solde'],
+      'operateurId' => (int) $compte['idOperateur'],
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     window.clientTransactions = <?= json_encode($history ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     window.clientFeeSlabs = <?= json_encode([
@@ -295,6 +297,7 @@
       'transfert' => array_map(fn ($s) => ['min' => (float) $s['min'], 'max' => (float) $s['max'], 'fee' => (float) $s['montant']], $feeSlabs['transfert'] ?? []),
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     window.clientPrefixes = <?= json_encode($prefixes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.clientPrefixesData = <?= json_encode($prefixesData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
   <script src="<?= base_url('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
   <script src="<?= base_url('js/client-dashboard.js') ?>"></script>

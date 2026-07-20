@@ -1,5 +1,6 @@
 /* ─── Config & données (fournies par le serveur, aucune donnée statique) ── */
 const PREFIXES = window.clientPrefixes || [];
+const PREFIXES_DATA = window.clientPrefixesData || {};
 const SLABS_RETRAIT = (window.clientFeeSlabs && window.clientFeeSlabs.retrait) || [];
 const SLABS_TRANSFERT = (window.clientFeeSlabs && window.clientFeeSlabs.transfert) || [];
 
@@ -7,6 +8,7 @@ const SLABS_TRANSFERT = (window.clientFeeSlabs && window.clientFeeSlabs.transfer
 const phone = (window.clientAccount && window.clientAccount.phone) || '';
 const client = {
     balance: (window.clientAccount && window.clientAccount.balance) || 0,
+    operateurId: (window.clientAccount && window.clientAccount.operateurId) || 0,
     transactions: Array.isArray(window.clientTransactions) ? window.clientTransactions : [],
 };
 
@@ -122,23 +124,47 @@ function updateFeePreview(type) {
     preview.style.display = 'block';
 
     if (type === 'transfert') {
+        const targetNumber = document.getElementById('transfert-target').value.replace(/\s/g, '');
         const includeFee = document.getElementById('transfert-include-fee')?.checked || false;
 
+        // Calculer la commission inter-opérateur
+        let commission = 0;
+        const commissionRow = document.getElementById('transfert-commission-row');
+
+        if (targetNumber.length === 10) {
+            const targetPrefix = targetNumber.slice(0, 3);
+            const targetPrefixData = PREFIXES_DATA[targetPrefix];
+
+            if (targetPrefixData && targetPrefixData.operateurId !== client.operateurId) {
+                // Opérateur différent - calculer la commission
+                commission = Math.round(amt * (targetPrefixData.commission || 0) / 100);
+                commissionRow.style.display = 'flex';
+                document.getElementById('transfert-p-commission').textContent = fmtAr(commission);
+            } else {
+                commissionRow.style.display = 'none';
+            }
+        } else {
+            commissionRow.style.display = 'none';
+        }
+
         if (includeFee) {
-            // Frais inclus dans le montant
-            const amountReceived = amt - fee;
+            // Frais inclus : ajouter les frais de retrait pour que le destinataire puisse retirer sans frais
+            const retraitFee = getFee(SLABS_RETRAIT, amt);
+            const amountReceived = amt + retraitFee; // Le destinataire reçoit plus pour couvrir son retrait
+            const totalDebit = amt + fee + retraitFee + commission;
+
             document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
-            document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
+            document.getElementById(type + '-p-fee').textContent = fmtAr(fee) + ' + ' + fmtAr(retraitFee) + ' (retrait)';
             document.getElementById('transfert-p-received-label').textContent = 'Destinataire reçoit';
             document.getElementById('transfert-p-received').textContent = fmtAr(amountReceived);
-            document.getElementById(type + '-p-total').textContent = fmtAr(amt);
+            document.getElementById(type + '-p-total').textContent = fmtAr(totalDebit);
         } else {
             // Frais ajoutés au montant
             document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
             document.getElementById(type + '-p-fee').textContent = fmtAr(fee);
             document.getElementById('transfert-p-received-label').textContent = 'Destinataire reçoit';
             document.getElementById('transfert-p-received').textContent = fmtAr(amt);
-            document.getElementById(type + '-p-total').textContent = fmtAr(amt + fee);
+            document.getElementById(type + '-p-total').textContent = fmtAr(amt + fee + commission);
         }
     } else {
         document.getElementById(type + '-p-amount').textContent = fmtAr(amt);
@@ -226,11 +252,12 @@ async function doOperation(type) {
 
     /* Feedback */
     const fee = result.transaction.fee;
+    const amountReceived = result.transaction.amountReceived;
     const msgs = {
         depot: `Dépôt de ${fmtAr(amt)} effectué avec succès.`,
         retrait: `Retrait de ${fmtAr(amt)} effectué. Frais : ${fmtAr(fee)}.`,
         transfert: includeFee
-            ? `${fmtAr(amt)} envoyé à ${fmtPhone(target)} (frais inclus). Le destinataire reçoit ${fmtAr(amt - fee)}.`
+            ? `${fmtAr(amt)} envoyé à ${fmtPhone(target)} (frais inclus). Le destinataire reçoit ${fmtAr(amountReceived)}.`
             : `${fmtAr(amt)} envoyé à ${fmtPhone(target)}. Frais : ${fmtAr(fee)}.`,
     };
     showFeedback(true, msgs[type]);
@@ -311,7 +338,6 @@ function updateMultipleFeePreview() {
     const preview = document.getElementById('transfert-multiple-preview');
     const recipients = document.querySelectorAll('.recipient-phone');
     const validRecipients = Array.from(recipients).filter(input => input.value.length === 10);
-    const includeFee = document.getElementById('transfert-multiple-include-fee')?.checked || false;
 
     if (!amt || amt < 100 || validRecipients.length === 0) {
         preview.style.display = 'none';
@@ -322,27 +348,13 @@ function updateMultipleFeePreview() {
     const fee = getFee(SLABS_TRANSFERT, perPerson);
     const totalFee = fee * validRecipients.length;
 
-    let amountReceived, totalDebit;
-
-    if (includeFee) {
-        // Frais inclus : on déduit les frais de chaque part
-        amountReceived = perPerson - fee;
-        totalDebit = amt; // Le montant total saisi est débité
-    } else {
-        // Frais non inclus : chaque destinataire reçoit la part complète
-        amountReceived = perPerson;
-        totalDebit = amt + totalFee;
-    }
-
     preview.style.display = 'block';
     document.getElementById('transfert-m-amount').textContent = fmtAr(amt);
     document.getElementById('transfert-m-count').textContent = validRecipients.length;
     document.getElementById('transfert-m-per-person').textContent = fmtAr(perPerson);
     document.getElementById('transfert-m-fee').textContent = fmtAr(fee);
-    document.getElementById('transfert-m-received-label').textContent = 'Chaque destinataire reçoit';
-    document.getElementById('transfert-m-received').textContent = fmtAr(amountReceived);
     document.getElementById('transfert-m-total-fee').textContent = fmtAr(totalFee);
-    document.getElementById('transfert-m-total').textContent = fmtAr(totalDebit);
+    document.getElementById('transfert-m-total').textContent = fmtAr(amt + totalFee);
 }
 
 /* ─── Multiple transfert execution ──────────────────────────────── */
