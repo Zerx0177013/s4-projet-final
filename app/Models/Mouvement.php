@@ -174,8 +174,8 @@ class Mouvement extends Model
 
         $newBalance = match ($type) {
             'depot'     => $compteModel->ajusterSolde($compte['id'], $amount),
-            'retrait'   => $compteModel->ajusterSolde($compte['id'], -($amount + $fee)),
-            'transfert' => $compteModel->ajusterSolde($compte['id'], -($amount + $fee)),
+            'retrait'   => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
+            'transfert' => $compteModel->ajusterSolde($compte['id'], - ($amount + $fee)),
         };
 
         if ($type === 'transfert') {
@@ -210,16 +210,16 @@ class Mouvement extends Model
     public function getHistoriqueCompte(int $idCompte, float $soldeActuel): array
     {
         $rows = $this->select(
-                'Mouvement.id, Mouvement.somme, Mouvement.montantFrais, Mouvement.dateMouvement, ' .
+            'Mouvement.id, Mouvement.somme, Mouvement.montantFrais, Mouvement.dateMouvement, ' .
                 'Mouvement.idSender, Mouvement.idReceiver, TypeOperation.libelle AS typeLibelle, ' .
                 'sender.number AS senderNumber, receiver.number AS receiverNumber'
-            )
+        )
             ->join('TypeOperation', 'TypeOperation.id = Mouvement.idTypeOperation')
             ->join('compte AS sender', 'sender.id = Mouvement.idSender', 'left')
             ->join('compte AS receiver', 'receiver.id = Mouvement.idReceiver', 'left')
             ->groupStart()
-                ->where('Mouvement.idSender', $idCompte)
-                ->orWhere('Mouvement.idReceiver', $idCompte)
+            ->where('Mouvement.idSender', $idCompte)
+            ->orWhere('Mouvement.idReceiver', $idCompte)
             ->groupEnd()
             ->orderBy('Mouvement.dateMouvement', 'DESC')
             ->orderBy('Mouvement.id', 'DESC')

@@ -59,7 +59,9 @@ foreach (($liste ?? []) as $mouvement) {
                 'prefixes' => $prefixes ?? [],
             ]) ?>
 
-            <?= view('operator/partials/tab_operations') ?>
+            <?= view('operator/partials/tab_operations', [
+                'typeOperations' => $typeOperations ?? [],
+            ]) ?>
 
             <?= view('operator/partials/tab_gains', [
                 'gainRetrait' => $gainRetrait,

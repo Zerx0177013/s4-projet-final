@@ -18,6 +18,11 @@ $routes->get('/operator/gains', 'DashboardController::afficherGainParOperateur')
 $routes->post('/operator/prefixes/ajouter', 'PrefixeController::ajouter');
 $routes->get('/operator/prefixes/supprimer/(:num)', 'PrefixeController::supprimer/$1');
 
+// Tranches de frais (CRUD) des barèmes utilisés par les types d'opérations
+$routes->post('/operator/tranches/ajouter', 'TrancheController::ajouter');
+$routes->post('/operator/tranches/modifier/(:num)', 'TrancheController::modifier/$1');
+$routes->get('/operator/tranches/supprimer/(:num)', 'TrancheController::supprimer/$1');
+
 $routes->get('/client/login', 'ClientController::login');
 $routes->post('/client/login', 'ClientController::authenticate');
 $routes->get('/client/logout', 'ClientController::logout');

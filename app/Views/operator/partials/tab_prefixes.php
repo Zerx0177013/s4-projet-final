@@ -49,14 +49,15 @@ $prefixError = session()->getFlashdata('prefixError');
                     <?php endif; ?>
                 </div>
 
-                <div class="nm-card p-4" style="max-width:320px">
+                <div class="nm-card p-4 compact-form-card">
                     <div style="font-size:.875rem;font-weight:500;margin-bottom:.75rem">Ajouter un préfixe</div>
                     <form action="<?= base_url('operator/prefixes/ajouter') ?>" method="post" onsubmit="return addPrefix()">
                         <?= csrf_field() ?>
-                        <div class="d-flex gap-2">
-                            <input id="new-prefix-input" name="prefix" type="text" class="nm-input" placeholder="034"
-                                maxlength="3" oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)">
-                            <button type="submit" class="btn-primary">
+                        <div class="compact-form-row">
+                            <input id="new-prefix-input" name="prefix" type="text" class="nm-input mono"
+                                placeholder="034" maxlength="3" inputmode="numeric" autocomplete="off"
+                                oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)">
+                            <button type="submit" class="btn-primary btn-square" aria-label="Ajouter le préfixe">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">

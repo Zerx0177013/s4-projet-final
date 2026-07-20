@@ -155,17 +155,19 @@ body {
   background: var(--nm-card);
   border: 1px solid var(--nm-border);
   border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
 }
 
 /* Prefix chips */
 .prefix-chip {
   background: var(--nm-card);
   border: 1px solid var(--nm-border);
-  border-radius: 12px;
-  padding: 0.875rem 1rem;
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 68px;
 }
 
 .prefix-val {
@@ -205,6 +207,8 @@ body {
   width: 100%;
   outline: none;
   transition: border-color 0.2s;
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 .nm-input:focus {
@@ -213,6 +217,14 @@ body {
 
 .nm-input::placeholder {
   color: rgba(96, 122, 150, 0.5);
+}
+
+.nm-input::-webkit-outer-spin-button,
+.nm-input::-webkit-inner-spin-button,
+.fee-input::-webkit-outer-spin-button,
+.fee-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .btn-primary {
@@ -302,6 +314,10 @@ body {
   display: block;
 }
 
+.op-body table {
+  overflow: hidden;
+}
+
 /* Table */
 .nm-table {
   width: 100%;
@@ -346,10 +362,11 @@ body {
 }
 
 .fee-input {
-  width: 96px;
+  width: 100%;
+  max-width: 128px;
   text-align: right;
-  padding: 0.375rem 0.625rem;
-  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
   background: var(--nm-secondary);
   border: 1px solid var(--nm-border);
   color: var(--nm-text);
@@ -357,10 +374,55 @@ body {
   font-size: 0.875rem;
   outline: none;
   transition: border-color 0.2s;
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 .fee-input:focus {
   border-color: rgba(0, 214, 143, 0.4);
+}
+
+.fee-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fee-separator {
+  color: var(--nm-muted);
+  font-family: "JetBrains Mono", monospace;
+  flex-shrink: 0;
+}
+
+.fee-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.compact-form-card {
+  max-width: 380px;
+  width: 100%;
+}
+
+.compact-form-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.compact-form-row .nm-input {
+  min-width: 0;
+}
+
+.btn-square {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 0;
 }
 
 /* Stat cards */

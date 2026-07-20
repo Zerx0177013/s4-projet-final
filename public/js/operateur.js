@@ -26,87 +26,38 @@ function switchTab(id, btn) {
     if (id === 'accounts') renderAccounts();
 }
 
-/* ─── Prefixes ──────────────────────────────────────────────────────── */
-function renderPrefixes() {
-    const grid = document.getElementById('prefix-grid');
-    grid.innerHTML = prefixes.map(p => `
-    <div class="col-6 col-sm-4 col-md-3">
-        <div class="prefix-chip">
-            <span class="prefix-val">${p}</span>
-            <button class="btn-del" onclick="deletePrefix('${p}')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>
-            </button>
-        </div>
-    </div>`).join('');
-}
+// Si l'URL contient ?tab=xxx (ex: après un ajout/suppression), on active cet onglet.
+(function activateTabFromQueryString() {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (!tab || !document.getElementById('tab-' + tab)) return;
+    const btn = document.querySelector('[data-tab="' + tab + '"]');
+    switchTab(tab, btn);
+})();
 
+/* ─── Prefixes ──────────────────────────────────────────────────────── */
+// Les préfixes sont gérés côté serveur (voir operator/partials/tab_prefixes.php
+// et PrefixeController). Le formulaire d'ajout se contente de valider la saisie avant envoi.
 function addPrefix() {
     const input = document.getElementById('new-prefix-input');
     const errEl = document.getElementById('prefix-error');
     const p = input.value.trim();
-    if (!/^\d{3}$/.test(p)) { errEl.textContent = 'Préfixe invalide (3 chiffres requis).'; errEl.style.display = 'block'; return }
-    if (prefixes.includes(p)) { errEl.textContent = 'Ce préfixe existe déjà.'; errEl.style.display = 'block'; return }
-    prefixes.push(p);
-    input.value = '';
+    if (!/^\d{3}$/.test(p)) {
+        errEl.textContent = 'Préfixe invalide (3 chiffres requis).';
+        errEl.style.display = 'block';
+        return false;
+    }
     errEl.style.display = 'none';
-    renderPrefixes();
-}
-
-function deletePrefix(p) {
-    prefixes = prefixes.filter(x => x !== p);
-    renderPrefixes();
+    return true;
 }
 
 /* ─── Operations ────────────────────────────────────────────────────── */
-function renderOperations() {
-    const list = document.getElementById('operations-list');
-    list.innerHTML = operations.map(op => `
-    <div class="op-accordion">
-        <button class="op-header" onclick="toggleOp('${op.id}')">
-            <div class="d-flex align-items-center gap-3">
-                <span class="op-dot" style="background:${op.color}"></span>
-                <span style="font-weight:500">${op.name}</span>
-                ${!op.hasFees ? '<span class="op-badge">Sans frais</span>' : ''}
-            </div>
-            <svg class="chevron" id="chevron-${op.id}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-        </button>
-        <div class="op-body ${op.id === 'retrait' ? 'open' : ''}" id="body-${op.id}">
-            ${op.hasFees
-            ? `<table class="nm-table">
-                <thead><tr>
-                  <th>Tranche (Ar)</th>
-                  <th class="right">Frais (Ar)</th>
-                </tr></thead>
-                <tbody>${op.slabs.map((s, i) => `
-                  <tr>
-                    <td class="mono" style="font-size:.75rem;color:var(--nm-muted)">
-                      ${new Intl.NumberFormat('fr-FR').format(s.min)} – ${new Intl.NumberFormat('fr-FR').format(s.max)}
-                    </td>
-                    <td class="td-right">
-                      <input type="number" class="fee-input" value="${s.fee}"
-                        onchange="updateFee('${op.id}',${i},this.value)">
-                    </td>
-                  </tr>`).join('')}
-                </tbody></table>`
-            : `<div style="padding:1rem 1.25rem;font-size:.875rem;color:var(--nm-muted)">Aucun barème de frais pour cette opération.</div>`
-        }
-        </div>
-    </div>`).join('');
-    // Open retrait chevron by default
-    const ch = document.getElementById('chevron-retrait');
-    if (ch) ch.style.transform = 'rotate(180deg)';
-}
-
+// Les types d'opérations et leurs tranches de frais sont gérés côté serveur
+// (voir operator/partials/tab_operations.php et TrancheController).
 function toggleOp(id) {
     const body = document.getElementById('body-' + id);
     const ch = document.getElementById('chevron-' + id);
     const open = body.classList.toggle('open');
     ch.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
-}
-
-function updateFee(opId, idx, val) {
-    const op = operations.find(o => o.id === opId);
-    if (op) op.slabs[idx].fee = parseInt(val) || 0;
 }
 
 /* ─── Gains ─────────────────────────────────────────────────────────── */
@@ -118,6 +69,7 @@ function renderGains() {
     document.getElementById('gain-transfert').textContent = fmtAr(operatorGains.transfert || 0);
     document.getElementById('gain-total').textContent = fmtAr(operatorGains.total || 0);
 }
+
 /* ─── Accounts ──────────────────────────────────────────────────────── */
 function renderAccounts() {
     const accounts = accountClients;
@@ -152,7 +104,3 @@ function renderAccounts() {
     </tr>`;
     }).join('');
 }
-
-/* ─── Init ──────────────────────────────────────────────────────────── */
-renderPrefixes();
-renderOperations();

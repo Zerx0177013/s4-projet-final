@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\Compte;
 use App\Models\Mouvement;
 use App\Models\PrefixOperateur;
+use App\Models\Tranche;
+use App\Models\TypeOperation;
 
 class CompteController extends BaseController
 {
@@ -19,14 +21,25 @@ class CompteController extends BaseController
         $compteModel = new Compte();
         $mouvementModel = new Mouvement();
         $prefixModel = new PrefixOperateur();
+        $typeOperationModel = new TypeOperation();
+        $trancheModel = new Tranche();
 
         $gains = $mouvementModel->calculGainParOperateur($idOperateur);
         $gains['total'] = array_sum($gains);
         $gains['liste'] = $mouvementModel->getMouvementDetails($idOperateur);
 
+        $typeOperations = $typeOperationModel->orderBy('id', 'ASC')->findAll();
+        foreach ($typeOperations as &$typeOperation) {
+            $typeOperation['tranches'] = $typeOperation['idBareme'] !== null
+                ? $trancheModel->getSlabsByBareme((int) $typeOperation['idBareme'])
+                : [];
+        }
+        unset($typeOperation);
+
         $data = array_merge($gains, [
-            'comptes'  => $compteModel->getComptesAvecTransactions($idOperateur),
-            'prefixes' => $prefixModel->getPrefixesByOperateur($idOperateur),
+            'comptes'        => $compteModel->getComptesAvecTransactions($idOperateur),
+            'prefixes'       => $prefixModel->getPrefixesByOperateur($idOperateur),
+            'typeOperations' => $typeOperations,
         ]);
 
         return view('operator/operator', $data);

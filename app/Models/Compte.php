@@ -115,10 +115,4 @@ class Compte extends Model
 
         return $comptes;
     }
-
-    
-    
-    
-
-
 }
