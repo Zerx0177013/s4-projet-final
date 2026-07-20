@@ -17,4 +17,5 @@ class Operateur extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
+    
 }
