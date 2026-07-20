@@ -24,5 +24,5 @@ function handleLogin(e) {
     }
     /* Stocker le numéro en session et rediriger */
     sessionStorage.setItem('nm_phone', phone);
-    window.location.href = 'client-dashboard.html';
+    window.location.href = window.clientDashboardUrl || 'client-dashboard.html';
 }

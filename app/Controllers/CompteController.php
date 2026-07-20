@@ -5,11 +5,6 @@ use App\Models\Compte;
 
 class CompteController extends BaseController
 {
-    public function dashboard(): string
-    {
-        return $this->afficherComptes();
-    }
-
     public function afficherComptes(): string
     {
         $compteModel = new Compte();
