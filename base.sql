@@ -45,6 +45,8 @@ CREATE TABLE compte (
     idStatus INTEGER NOT NULL DEFAULT 1,
     idOperateur INTEGER NOT NULL,
     solde REAL NOT NULL DEFAULT 0 CHECK (solde >= 0),
+    PourcentageCaisse REAL NOT NULL DEFAULT 0 CHECK (PourcentageCaisse >= 0),
+    caisse REAL NOT NULL DEFAULT 0 CHECK (caisse >= 0),
     FOREIGN KEY (idOperateur) REFERENCES Operateur (id),
     FOREIGN KEY (idStatus) REFERENCES statusType (id)
 );
@@ -119,12 +121,12 @@ INSERT INTO statusType (id, libelle) VALUES
 
 -- 7. Comptes clients
 -- id=1,2 -> Telma (idOperateur=1) | id=3,4 -> Orange (idOperateur=2) | id=5 -> Airtel (idOperateur=3)
-INSERT INTO compte (number, idStatus, idOperateur, solde) VALUES
-    ('0321234567', 1, 1, 50000),   -- id 1, Telma
-    ('0371234567', 1, 1, 12000),   -- id 2, Telma
-    ('0331234567', 1, 2, 80000),   -- id 3, Orange
-    ('0391234567', 2, 2, 0),       -- id 4, Orange (bloqué)
-    ('0381234567', 1, 3, 25000);   -- id 5, Airtel
+INSERT INTO compte (number, idStatus, idOperateur, solde , PourcentageCaisse , caisse) VALUES
+    ('0321234567', 1, 1, 50000 , 20 , 0),   -- id 1, Telma
+    ('0371234567', 1, 1, 12000 , 20, 0),   -- id 2, Telma
+    ('0331234567', 1, 2, 80000, 20, 0),   -- id 3, Orange
+    ('0391234567', 2, 2, 0, 20, 0),       -- id 4, Orange (bloqué)
+    ('0381234567', 1, 3, 25000, 20, 0);   -- id 5, Airtel
 
 -- 8. Mouvements (historique) : dépôt, retrait, transfert
 -- idOperateur = l'opérateur qui gère/prélève l'opération (celui du compte concerné)

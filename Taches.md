@@ -106,6 +106,19 @@ Bonus : modification de frais
 - [ ] modification de la fonction js pour afficher les reductions
 
 
+Caisse d'epargne mnt dans le compte de chaque utilisateur 
+- [x] ajout cologne caisse dans compte
+- [x] ajout de la cologne PourcentageCaisse
+- [x] modifier les donneees de test
+- [x] modification du model Compte
+- [x] creation de la getourcentageCaisse()
+- [x] creation de la fonction getCaisse()
+- [x] modifier la fonction enregistrerOperation()
+- [x] prendre en compte le %caisse du client pour diviser le transfert en 2
+- [ ] mettre %du client dans caisse et les autre dans solde
+- [ ] cree une sous page pour modofier le pourcentagecaisse
+- [ ] cree une sous page pour afficher le montant dans caisse
+
 ## Frontend
 
 - [x] Création de template avec Figma Make (Noah)

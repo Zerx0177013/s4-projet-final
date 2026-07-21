@@ -117,6 +117,7 @@ function renderHistory() {
 /* ─── Fee preview ───────────────────────────────────────────────────── */
 function updateFeePreview(type) {
     const slabs = type === 'retrait' ? SLABS_RETRAIT : SLABS_TRANSFERT;
+    const slabs2 = type === 'caisse' ? SLABS_RETRAIT : SLABS_TRANSFERT;
     const amt = parseInt(document.getElementById(type + '-amount').value);
     const preview = document.getElementById(type + '-preview');
     if (!amt || amt < 100) { preview.style.display = 'none'; return }

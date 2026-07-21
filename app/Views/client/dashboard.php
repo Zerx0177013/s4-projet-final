@@ -58,6 +58,15 @@
       </svg>
       Solde
     </button>
+    <button class="tab-nav-btn active" data-tab="balance" onclick="switchTab('caisse',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+        <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
+      </svg>
+      caisse
+    </button>
     <button class="tab-nav-btn" data-tab="depot" onclick="switchTab('depot',this)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round">
@@ -155,6 +164,36 @@
             <label class="nm-label" for="retrait-amount">Montant (Ar)</label>
             <input id="retrait-amount" type="number" class="nm-input mono-font" placeholder="ex : 50 000" min="100"
               oninput="updateFeePreview('retrait');clearFeedback()">
+          </div>
+          <div id="retrait-preview" style="display:none" class="fee-preview mb-3">
+            <div class="fee-row"><span>Montant</span><span class="mono-font" id="retrait-p-amount">—</span></div>
+            <div class="fee-row"><span>Frais</span><span class="mono-font" id="retrait-p-fee">—</span></div>
+            <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="retrait-p-total">—</span>
+            </div>
+          </div>
+          <button class="btn-confirm" onclick="doOperation('retrait')">Confirmer le retrait</button>
+        </div>
+      </div>
+
+      <div id="tab-caisse" class="tab-section">
+        <div class="op-card">
+          <div class="op-card-header">
+            <div class="op-card-icon" style="background:rgba(248,113,113,.1)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 5 5 12" />
+              </svg>
+            </div>
+            <div>
+              <div class="op-card-title">caisse</div>
+              <div class="op-card-sub">Modifier vos caisse</div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="nm-label" for="retrait-amount">Montant (Ar)</label>
+            <input id="retrait-amount" type="number" class="nm-input mono-font" placeholder="ex : 50 000" min="100"
+              oninput="updateFeePreview('caisse');clearFeedback()">
           </div>
           <div id="retrait-preview" style="display:none" class="fee-preview mb-3">
             <div class="fee-row"><span>Montant</span><span class="mono-font" id="retrait-p-amount">—</span></div>

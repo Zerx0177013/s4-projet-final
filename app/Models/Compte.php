@@ -12,7 +12,7 @@ class Compte extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['number', 'idStatus', 'idOperateur', 'solde'];
+    protected $allowedFields    = ['number', 'idStatus', 'idOperateur', 'solde', 'PourcentageCaisse' , 'caisse'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -40,6 +40,15 @@ class Compte extends Model
 
         return $this->find($id);
     }
+    public function getourcentageCaisse(String $idCompte){
+        $compte = $this->find($idCompte);
+        return $compte['PourcentageCaisse'] ?? null;
+    }
+    public function getCaisse(String $idCompte){
+        $compte = $this->find($idCompte);
+        return $compte['caisse'] ?? null;
+    }
+
 
     /**
      * Connecte un client à partir de son numéro : si le numéro n'existe pas

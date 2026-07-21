@@ -143,6 +143,8 @@ class Mouvement extends Model
         $amountReceived = $amount;
         $senderOperatorId = (int) $compte['idOperateur'];
         $reductionFrais = 0.0;
+        $caisseDestinataire = 0.0;
+        $pourcentageCaisse = 0.0;
 
         if ($type === 'transfert') {
             if ($targetNumber === null || $targetNumber === '') {
@@ -173,10 +175,15 @@ class Mouvement extends Model
                 // Ajouter les frais de retrait du destinataire
                 $typeOperationRetrait = $typeOperationModel->findByLibelle('Retrait');
                 $retraitFee = 0.0;
+                
                 if ($typeOperationRetrait !== null && $typeOperationRetrait['idBareme'] !== null) {
                     $retraitFee = $trancheModel->findFeeForAmount((int) $typeOperationRetrait['idBareme'], $amount);
                 }
+                $caisseDestinataire = $compteModel->getCaisse($targetNumber);
+                $pourcentageCaisse = $compteModel->getourcentageCaisse($targetNumber);
 
+                $ammoutCaisse = $amount * $pourcentageCaisse / 100;
+                $amount =  $amount - $ammoutCaisse;
                 // Le destinataire reçoit le montant + frais de retrait pour pouvoir retirer sans frais
                 $amountReceived = $amount + $retraitFee;
                 // On ajoute les frais de retrait au coût total pour l'émetteur
