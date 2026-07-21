@@ -142,6 +142,7 @@ class Mouvement extends Model
         $commissionFee = 0.0;
         $amountReceived = $amount;
         $senderOperatorId = (int) $compte['idOperateur'];
+        $reductionFrais = 0.0;
 
         if ($type === 'transfert') {
             if ($targetNumber === null || $targetNumber === '') {
@@ -186,13 +187,16 @@ class Mouvement extends Model
             if ($senderOperatorId !== $targetOperatorId) {
                 $pourcentage = (float) $operateurModel->getPourcentageCommission($targetOperatorId);
                 $commissionFee = $amount * $pourcentage / 100;
+            }else{
+                $pourcentage = (float) $operateurModel->getPourcentagePromo($targetOperatorId);
+                $reductionFrais = $fee * $pourcentage / 100;
             }
         }
 
         $totalCost = match ($type) {
             'depot' => 0.0,
             'retrait' => $amount + $fee,
-            'transfert' => $amount + $fee + $commissionFee,
+            'transfert' => $amount + $fee + $commissionFee - $reductionFrais,
         };
 
         if ($type !== 'depot' && (float) $compte['solde'] < $totalCost) {
@@ -208,7 +212,7 @@ class Mouvement extends Model
 
             $this->insert([
                 'somme'              => $amount,
-                'montantFrais'       => $fee,
+                'montantFrais'       => $fee - $reductionFrais,
                 'idTypeOperation'    => $typeOperation['id'],
                 'idSender'           => $idSender,
                 'idReceiver'         => $idReceiver,

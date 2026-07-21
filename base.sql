@@ -4,7 +4,8 @@ CREATE TABLE Operateur (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom TEXT NOT NULL UNIQUE,
     pourcentageCommission REAL NOT NULL DEFAULT 0 CHECK (pourcentageCommission >= 0), 
-    montantCommission REAL NOT NULL DEFAULT 0 CHECK (montantCommission >= 0)
+    montantCommission REAL NOT NULL DEFAULT 0 CHECK (montantCommission >= 0),
+    pourcentagePromoFrais REAL NOT  NULL DEFAULT 0
 );
 
 CREATE TABLE prefixOperateur (
@@ -76,10 +77,10 @@ CREATE TABLE Mouvement (
 -- ============================================================
 
 -- 1. Opérateurs
-INSERT INTO Operateur (nom,pourcentageCommission) VALUES
-    ('Telma Mvola', 10),
-    ('Orange Money',10),
-    ('Airtel Money',10);
+INSERT INTO Operateur (nom,pourcentageCommission,pourcentagePromoFrais) VALUES
+    ('Telma Mvola', 10, 20),
+    ('Orange Money',10, 20),
+    ('Airtel Money',10, 20);
 
 -- 2. Préfixes valables par opérateur
 INSERT INTO prefixOperateur (idOperateur, prefix) VALUES

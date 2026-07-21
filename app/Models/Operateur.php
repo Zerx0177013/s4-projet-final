@@ -12,7 +12,7 @@ class Operateur extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['nom', 'pourcentageCommission', 'montantCommission'];
+    protected $allowedFields    = ['nom', 'pourcentageCommission', 'montantCommission', 'pourcentagePromoFrais'];
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
@@ -33,5 +33,19 @@ class Operateur extends Model
         $currentMontant = $this->getMontantCommission($id);
         $newMontant = $currentMontant + $montant;
         return $this->update($id, ['montantCommission' => $newMontant]);
+    }
+
+        public function getPourcentagePromo(int $id)
+    {
+        $pourcentage = $this->find($id);
+        return $pourcentage['pourcentagePromoFrais'] ?? 0;
+    }
+
+    public function modifyPourcentage(int $id, float $pourcentage){
+        return $this->update($id, ['pourcentagePromoFrais' => $pourcentage]);
+    }
+
+    public function getAllPromoPourcentages(){
+        return $this->findAll();
     }
 }

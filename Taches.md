@@ -83,6 +83,29 @@ Details dans todo.md
   - [x] Commission calculée en % et versée à l'opérateur destinataire
   - [x] Ajout au total débité de l'émetteur
 
+
+Promotion en % frais de transfert meme operateur
+base
+Bonus : modification de frais
+
+- [x] ajout colonne dans operateur
+- [x] modifier les donnees de test
+- [x] modification du model Operateur
+- [x] creation fonction getPourcentagePromo
+- [x] modification de la fonction enregistrerOperation
+- [x] appel de getPourcentagePromo pour transfert
+- [x] soustraire le frais actuel avec le pourcentage de ce frais
+- [x] soustraire le fee avant de l'envoyer dans la base
+- [ ] faire la page pour gerer ce pourcentage
+  - [ ] creation de tab_promo
+  - [x] creation de la fonction modifyPourcentage dans le model pour aller dans le controller
+  - [x] modifyPromoPourcentage dans le controller
+  - [ ] creation de la fonction getAllPromoPourcentages
+  - [ ] lister les pourcentages dans tab_promo
+  - [ ] ajouter une route pour les modifications
+- [ ] modification de la fonction js pour afficher les reductions
+
+
 ## Frontend
 
 - [x] Création de template avec Figma Make (Noah)
