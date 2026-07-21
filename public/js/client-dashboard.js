@@ -337,7 +337,9 @@ function updateMultipleFeePreview() {
     const amt = parseInt(document.getElementById('transfert-multiple-amount').value);
     const preview = document.getElementById('transfert-multiple-preview');
     const recipients = document.querySelectorAll('.recipient-phone');
-    const validRecipients = Array.from(recipients).filter(input => input.value.length === 10);
+    const validRecipients = Array.from(recipients)
+        .map(input => input.value.replace(/\s/g, ''))
+        .filter(num => num.length === 10);
 
     if (!amt || amt < 100 || validRecipients.length === 0) {
         preview.style.display = 'none';
@@ -348,13 +350,35 @@ function updateMultipleFeePreview() {
     const fee = getFee(SLABS_TRANSFERT, perPerson);
     const totalFee = fee * validRecipients.length;
 
+    // Calculer la commission totale pour tous les destinataires
+    let totalCommission = 0;
+    validRecipients.forEach(targetNumber => {
+        const targetPrefix = targetNumber.slice(0, 3);
+        const targetPrefixData = PREFIXES_DATA[targetPrefix];
+
+        if (targetPrefixData && targetPrefixData.operateurId !== client.operateurId) {
+            // Opérateur différent - calculer la commission pour ce destinataire
+            const commission = Math.round(perPerson * (targetPrefixData.commission || 0) / 100);
+            totalCommission += commission;
+        }
+    });
+
+    // Afficher ou masquer la ligne commission
+    const commissionRow = document.getElementById('transfert-m-commission-row');
+    if (totalCommission > 0) {
+        commissionRow.style.display = 'flex';
+        document.getElementById('transfert-m-commission').textContent = fmtAr(totalCommission);
+    } else {
+        commissionRow.style.display = 'none';
+    }
+
     preview.style.display = 'block';
     document.getElementById('transfert-m-amount').textContent = fmtAr(amt);
     document.getElementById('transfert-m-count').textContent = validRecipients.length;
     document.getElementById('transfert-m-per-person').textContent = fmtAr(perPerson);
     document.getElementById('transfert-m-fee').textContent = fmtAr(fee);
     document.getElementById('transfert-m-total-fee').textContent = fmtAr(totalFee);
-    document.getElementById('transfert-m-total').textContent = fmtAr(amt + totalFee);
+    document.getElementById('transfert-m-total').textContent = fmtAr(amt + totalFee + totalCommission);
 }
 
 /* ─── Multiple transfert execution ──────────────────────────────── */

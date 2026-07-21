@@ -267,6 +267,7 @@
               <div class="fee-row"><span>Par destinataire</span><span class="mono-font" id="transfert-m-per-person">—</span></div>
               <div class="fee-row"><span>Frais par transfert</span><span class="mono-font" id="transfert-m-fee">—</span></div>
               <div class="fee-row"><span>Frais total</span><span class="mono-font" id="transfert-m-total-fee">—</span></div>
+              <div class="fee-row" id="transfert-m-commission-row" style="display:none"><span>Commission inter-opérateur</span><span class="mono-font" id="transfert-m-commission">—</span></div>
               <div class="fee-row total"><span>Total débité</span><span class="mono-font" id="transfert-m-total">—</span></div>
             </div>
             <button class="btn-confirm" onclick="doOperation('transfert-multiple')">Confirmer les transferts</button>

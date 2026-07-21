@@ -346,13 +346,15 @@ class Mouvement extends Model
 
     /**
      * Effectue plusieurs transferts en divisant le montant total entre les destinataires.
+     * Réutilise enregistrerOperation() pour chaque transfert afin de bénéficier de toute
+     * la logique existante (commission inter-opérateur, validation, frais, etc.)
      * 
      * @param array $compte Le compte émetteur
      * @param float $totalAmount Le montant total à répartir
      * @param array $targetNumbers Les numéros des destinataires
      * @throws RuntimeException si l'opération ne peut pas être réalisée.
      */
-    function enregistrerMultipleTransferts(array $compte, float $totalAmount, array $targetNumbers): array
+    public function enregistrerMultipleTransferts(array $compte, float $totalAmount, array $targetNumbers): array
     {
         if ($totalAmount < 100) {
             throw new RuntimeException('Montant minimum : 100 Ar.');
@@ -367,94 +369,76 @@ class Mouvement extends Model
             throw new RuntimeException('Vous avez entré le même numéro plusieurs fois.');
         }
 
-        $compteModel = new Compte();
-        $typeOperationModel = new TypeOperation();
-        $typeOperation = $typeOperationModel->findByLibelle('Transfert');
-
-        if ($typeOperation === null) {
-            throw new RuntimeException("Type d'opération non configuré.");
+        // Vérifier qu'on ne s'envoie pas à soi-même
+        foreach ($targetNumbers as $targetNumber) {
+            if ($targetNumber === $compte['number']) {
+                throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
+            }
         }
 
-        $trancheModel = new Tranche();
         $perPerson = floor($totalAmount / count($targetNumbers));
 
         if ($perPerson < 100) {
             throw new RuntimeException('Montant par destinataire trop faible (minimum 100 Ar).');
         }
 
-        $fee = $typeOperation['idBareme'] !== null
+        // Calculer le coût total estimé (on utilisera le premier destinataire pour estimer)
+        // Note: Le coût réel peut varier si certains destinataires sont d'opérateurs différents
+        $typeOperationModel = new TypeOperation();
+        $typeOperation = $typeOperationModel->findByLibelle('Transfert');
+        
+        if ($typeOperation === null) {
+            throw new RuntimeException("Type d'opération non configuré.");
+        }
+
+        $trancheModel = new Tranche();
+        $estimatedFee = $typeOperation['idBareme'] !== null
             ? $trancheModel->findFeeForAmount((int) $typeOperation['idBareme'], $perPerson)
             : 0.0;
 
-        $totalCost = ($perPerson + $fee) * count($targetNumbers);
+        // Estimation du coût total (sans commission pour l'instant)
+        $estimatedTotalCost = ($perPerson + $estimatedFee) * count($targetNumbers);
 
-        if ((float) $compte['solde'] < $totalCost) {
+        if ((float) $compte['solde'] < $estimatedTotalCost) {
             throw new RuntimeException('Solde insuffisant.');
         }
 
-        // Valider tous les destinataires
-        $targets = [];
-        foreach ($targetNumbers as $targetNumber) {
-            if ($targetNumber === $compte['number']) {
-                throw new RuntimeException("Impossible de vous envoyer de l'argent à vous-même.");
-            }
-
-            $target = $compteModel->findByNumber($targetNumber);
-
-            if ($target === null) {
-                throw new RuntimeException("Compte destinataire $targetNumber introuvable.");
-            }
-
-            if ((int) $target['idStatus'] !== 1) {
-                throw new RuntimeException("Le compte $targetNumber est bloqué.");
-            }
-
-            $targets[] = $target;
-        }
-
-        $db = Database::connect();
-        $db->transStart();
-
+        // Exécuter les transferts un par un en utilisant enregistrerOperation()
         $transactions = [];
-        foreach ($targets as $target) {
-            $this->insert([
-                'somme'           => $perPerson,
-                'montantFrais'    => $fee,
-                'idTypeOperation' => $typeOperation['id'],
-                'idSender'        => $compte['id'],
-                'idReceiver'      => $target['id'],
-                'idOperateur'     => $compte['idOperateur'],
-            ]);
+        $totalDebited = 0;
+        $compteModel = new Compte();
 
-            $compteModel->ajusterSolde($target['id'], $perPerson);
+        foreach ($targetNumbers as $targetNumber) {
+            // Recharger le compte pour avoir le solde à jour
+            $compteActuel = $compteModel->find($compte['id']);
+            
+            if ($compteActuel === null) {
+                throw new RuntimeException('Erreur lors du rechargement du compte émetteur.');
+            }
 
-            $transactions[] = [
-                'type'          => 'transfert',
-                'amount'        => $perPerson,
-                'fee'           => $fee,
-                'date'          => date('d/m/Y H:i'),
-                'to'            => $target['number'],
-                'balance_after' => null, // Sera calculé après
-            ];
+            try {
+                // Appeler enregistrerOperation pour bénéficier de toute la logique
+                $result = $this->enregistrerOperation($compteActuel, 'transfert', $perPerson, $targetNumber, false);
+                
+                // Récupérer le nouveau solde et la transaction
+                $compte['solde'] = $result['balance'];
+                $transactions[] = $result['transaction'];
+                
+                // Calculer le montant réellement débité pour ce transfert
+                $previousBalance = $compteActuel['solde'];
+                $currentBalance = $result['balance'];
+                $totalDebited += ($previousBalance - $currentBalance);
+                
+            } catch (RuntimeException $e) {
+                // Si un transfert échoue, on propage l'erreur
+                // Les transferts précédents ont déjà été commités par enregistrerOperation()
+                throw new RuntimeException("Erreur lors du transfert vers {$targetNumber}: " . $e->getMessage());
+            }
         }
 
-        $newBalance = $compteModel->ajusterSolde($compte['id'], - $totalCost);
-
-        // Mettre à jour le balance_after pour toutes les transactions
-        $runningBalance = $newBalance;
-        foreach ($transactions as &$tx) {
-            $tx['balance_after'] = $runningBalance;
-        }
-        unset($tx);
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            throw new RuntimeException('Une erreur est survenue, veuillez réessayer.');
-        }
-
+        // Retourner le solde final et toutes les transactions
         return [
-            'balance'      => $newBalance,
+            'balance'      => $compte['solde'],
             'transactions' => $transactions,
         ];
     }
